@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { motion } from 'framer-motion'
-import { Camera, Check, Grid3X3 } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Camera, Check, Grid3X3, ImagePlus, X } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { getSupabase } from '@/lib/supabase'
 import { weddingConfig } from '@/config/wedding'
@@ -16,7 +16,9 @@ export default function BingoPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [uploading, setUploading] = useState<number | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const galleryInputRef = useRef<HTMLInputElement>(null)
   const [activeChallengeId, setActiveChallengeId] = useState<number | null>(null)
+  const [showSourcePicker, setShowSourcePicker] = useState(false)
 
   const loadCompleted = useCallback(async () => {
     const supabase = getSupabase()
@@ -47,7 +49,22 @@ export default function BingoPage() {
   function handleChallengeClick(challengeId: number) {
     if (completed[challengeId]) return
     setActiveChallengeId(challengeId)
+    setShowSourcePicker(true)
+  }
+
+  function handlePickCamera() {
+    setShowSourcePicker(false)
     fileInputRef.current?.click()
+  }
+
+  function handlePickGallery() {
+    setShowSourcePicker(false)
+    galleryInputRef.current?.click()
+  }
+
+  function handleCancelPicker() {
+    setShowSourcePicker(false)
+    setActiveChallengeId(null)
   }
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -92,6 +109,9 @@ export default function BingoPage() {
       setActiveChallengeId(null)
       if (fileInputRef.current) {
         fileInputRef.current.value = ''
+      }
+      if (galleryInputRef.current) {
+        galleryInputRef.current.value = ''
       }
     }
   }
@@ -150,6 +170,72 @@ export default function BingoPage() {
         className="hidden"
         onChange={handleFileChange}
       />
+      <input
+        ref={galleryInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleFileChange}
+      />
+
+      {/* Source picker modal */}
+      <AnimatePresence>
+        {showSourcePicker && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center"
+            onClick={handleCancelPicker}
+          >
+            <motion.div
+              initial={{ y: 100, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 100, opacity: 0 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="font-serif text-lg text-stone-800">Subir foto</h3>
+                <button
+                  type="button"
+                  onClick={handleCancelPicker}
+                  className="rounded-full p-1 text-stone-400 hover:bg-stone-100"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              <div className="flex flex-col gap-3">
+                <button
+                  type="button"
+                  onClick={handlePickCamera}
+                  className="flex items-center gap-3 rounded-xl px-4 py-3 text-left transition-colors hover:bg-stone-50"
+                  style={{ border: '1.5px solid #C9A84C' }}
+                >
+                  <Camera size={22} className="text-gold" />
+                  <div>
+                    <span className="font-medium text-stone-800">Tomar foto</span>
+                    <p className="text-xs text-stone-500">Usar la camara del dispositivo</p>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={handlePickGallery}
+                  className="flex items-center gap-3 rounded-xl px-4 py-3 text-left transition-colors hover:bg-stone-50"
+                  style={{ border: '1.5px solid #C9A84C' }}
+                >
+                  <ImagePlus size={22} className="text-gold" />
+                  <div>
+                    <span className="font-medium text-stone-800">Elegir de galeria</span>
+                    <p className="text-xs text-stone-500">Seleccionar una foto existente</p>
+                  </div>
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <section className="mx-auto mt-8 max-w-2xl px-4">
         {isLoading ? (
