@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Camera, Upload, X, CheckCircle, AlertCircle } from 'lucide-react';
+import { Camera, Upload, X, CheckCircle, AlertCircle, ImagePlus } from 'lucide-react';
 import imageCompression from 'browser-image-compression';
 import { getSupabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
@@ -39,6 +39,7 @@ interface Toast {
 export default function UploadSection({ onUploadComplete }: UploadSectionProps) {
   const { guestName } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
 
   const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
   const [caption, setCaption] = useState('');
@@ -70,9 +71,12 @@ export default function UploadSection({ onUploadComplete }: UploadSectionProps) 
 
     setSelectedFiles((prev) => [...prev, ...newSelected]);
 
-    // Reset input so the same file can be selected again if needed
+    // Reset inputs so the same file can be selected again if needed
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
+    }
+    if (galleryInputRef.current) {
+      galleryInputRef.current.value = '';
     }
   };
 
@@ -216,28 +220,45 @@ export default function UploadSection({ onUploadComplete }: UploadSectionProps) 
         )}
       </AnimatePresence>
 
-      {/* Upload trigger button */}
-      <div className="flex justify-center">
+      {/* Upload trigger buttons */}
+      <div className="flex justify-center gap-3">
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={isUploading}
-          className="group flex items-center gap-3 rounded-2xl px-8 py-4 text-white shadow-lg transition-all duration-200 hover:shadow-xl hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="group flex items-center gap-2 rounded-2xl px-6 py-4 text-white shadow-lg transition-all duration-200 hover:shadow-xl hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed"
           style={{ backgroundColor: '#C9A84C' }}
         >
-          <Camera size={22} strokeWidth={2} />
-          <span className="text-lg font-semibold">Subir Fotos</span>
-          <Upload size={18} strokeWidth={2} className="opacity-70 transition-transform group-hover:translate-y-[-2px]" />
+          <Camera size={20} strokeWidth={2} />
+          <span className="text-base font-semibold">Tomar Foto</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => galleryInputRef.current?.click()}
+          disabled={isUploading}
+          className="group flex items-center gap-2 rounded-2xl border-2 px-6 py-4 shadow-lg transition-all duration-200 hover:shadow-xl hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed"
+          style={{ borderColor: '#C9A84C', color: '#C9A84C' }}
+        >
+          <ImagePlus size={20} strokeWidth={2} />
+          <span className="text-base font-semibold">Galeria</span>
         </button>
       </div>
 
-      {/* Hidden file input */}
+      {/* Hidden file inputs */}
       <input
         ref={fileInputRef}
         type="file"
         accept="image/*"
         multiple
         capture="environment"
+        className="hidden"
+        onChange={handleFileSelect}
+      />
+      <input
+        ref={galleryInputRef}
+        type="file"
+        accept="image/*"
+        multiple
         className="hidden"
         onChange={handleFileSelect}
       />
