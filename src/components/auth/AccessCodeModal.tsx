@@ -24,7 +24,8 @@ export default function AccessCodeModal() {
 
     const correctCode = process.env.NEXT_PUBLIC_ACCESS_CODE;
 
-    if (code.trim().toLowerCase() === correctCode?.toLowerCase()) {
+    // Si no hay código configurado, cualquier código es válido (modo preview)
+    if (!correctCode || code.trim().toLowerCase() === correctCode.toLowerCase()) {
       setValidatedCode(code.trim());
       setStep(2);
     } else {
