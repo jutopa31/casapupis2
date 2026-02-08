@@ -1,0 +1,128 @@
+@import "tailwindcss";
+
+/* =========================================================================
+   Theme Configuration (Tailwind v4)
+   ========================================================================= */
+
+@theme {
+  --color-gold: #C9A84C;
+  --color-gold-light: #E8D5A3;
+  --color-offwhite: #FAF9F6;
+  --color-text-primary: #2D2D2D;
+  --color-text-secondary: #6B6B6B;
+  --color-champagne: #F5ECD7;
+
+  --font-serif: "Playfair Display", Georgia, "Times New Roman", serif;
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+}
+
+/* =========================================================================
+   Custom CSS Properties
+   ========================================================================= */
+
+:root {
+  --color-gold: #C9A84C;
+  --color-gold-light: #E8D5A3;
+  --color-offwhite: #FAF9F6;
+  --color-text: #2D2D2D;
+  --color-text-secondary: #6B6B6B;
+}
+
+/* =========================================================================
+   Base Styles
+   ========================================================================= */
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-offwhite);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+}
+
+/* Serif font utility class using the Playfair CSS variable */
+.font-serif {
+  font-family: var(--font-playfair), Georgia, "Times New Roman", serif;
+}
+
+/* =========================================================================
+   Custom Scrollbar
+   ========================================================================= */
+
+/* Webkit-based browsers (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-offwhite);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-gold-light);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-gold);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-gold-light) var(--color-offwhite);
+}
+
+/* =========================================================================
+   Keyframe Animations
+   ========================================================================= */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* =========================================================================
+   Animation Utility Classes
+   ========================================================================= */
+
+.animate-fade-in {
+  animation: fadeIn 0.6s ease-out forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.6s ease-out forwards;
+}
+
+.animate-slide-in {
+  animation: slideIn 0.6s ease-out forwards;
+}
