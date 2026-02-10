@@ -86,11 +86,11 @@ export const weddingConfig: WeddingConfig = {
       neighborhood: "El Pato",
       city: "Berazategui",
       province: "Buenos Aires",
-      mapUrl: "[COMPLETAR_MAP_URL]",
-      wazeUrl: "[COMPLETAR_WAZE_URL]",
+      mapUrl: "https://maps.app.goo.gl/PPZn9vsMf2qnAMQo8?g_st=aw",
+      wazeUrl: "https://waze.com/ul?ll=-34.890674,-58.149847&navigate=yes",
       coordinates: {
-        lat: "[COMPLETAR_LATITUD]",
-        lng: "[COMPLETAR_LONGITUD]",
+        lat: "-34.890674",
+        lng: "-58.149847",
       },
     },
   },
@@ -99,8 +99,8 @@ export const weddingConfig: WeddingConfig = {
   // Datos Bancarios
   // -------------------------------------------------------------------------
   bankDetails: {
-    alias: "[COMPLETAR_ALIAS]",
-    cbu: "[COMPLETAR_CBU]",
+    alias: "casapupis",
+    cbu: "",
     holderName: "Julian & Jaqueline",
   },
 

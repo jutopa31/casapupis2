@@ -1,7 +1,8 @@
 'use client'
 
+import Image from 'next/image'
 import { motion } from 'framer-motion'
-import { MapPin, Navigation, Car } from 'lucide-react'
+import { MapPin, Navigation, Car, Route } from 'lucide-react'
 import { weddingConfig } from '@/config/wedding'
 
 const { location } = weddingConfig.couple
@@ -74,6 +75,46 @@ export default function ComoLlegarPage() {
               </a>
             )}
           </div>
+        </motion.div>
+
+        {/* Suggested route card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="mt-6 rounded-2xl border border-gold/10 bg-white p-6 shadow-sm"
+        >
+          <div className="flex items-start gap-4">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gold/10">
+              <Route className="h-6 w-6 text-gold" />
+            </div>
+            <div>
+              <h2 className="font-serif text-xl text-text-primary">Ruta sugerida</h2>
+              <p className="mt-1 text-sm text-text-secondary">
+                Desde la YPF de Mitre hasta la quinta
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-4 overflow-hidden rounded-xl border border-gold/10">
+            <Image
+              src="/ruta-sugerida.jpeg"
+              alt="Mapa con la ruta sugerida desde la YPF de Mitre hasta la quinta"
+              width={600}
+              height={450}
+              className="w-full object-cover"
+            />
+          </div>
+
+          <a
+            href="https://maps.app.goo.gl/kVYA1fji6S7H4jm56"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-4 flex items-center justify-center gap-2 rounded-xl bg-gold py-3 text-sm font-medium text-white transition-colors hover:bg-gold/90"
+          >
+            <Navigation className="h-4 w-4" />
+            Ver ruta en Google Maps
+          </a>
         </motion.div>
 
         {/* Map embed */}

@@ -50,7 +50,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const login = useCallback((name: string, code: string): boolean => {
-    const expectedCode = process.env.NEXT_PUBLIC_ACCESS_CODE
+    const expectedCode = process.env.NEXT_PUBLIC_ACCESS_CODE?.trim()
     // Si no hay código configurado, cualquier código es válido (modo preview)
     if (!expectedCode || code.trim().toLowerCase() === expectedCode.toLowerCase()) {
       const newState: AuthState = {

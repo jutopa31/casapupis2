@@ -88,27 +88,29 @@ export default function AgradecimientoPage() {
               </div>
 
               {/* CBU */}
-              <div className="flex items-center justify-between rounded-xl bg-offwhite p-4">
-                <div>
-                  <span className="text-xs font-medium uppercase tracking-wider text-text-secondary">
-                    CBU
-                  </span>
-                  <p className="mt-0.5 text-sm font-semibold text-text-primary break-all">
-                    {bankDetails.cbu}
-                  </p>
+              {bankDetails.cbu && (
+                <div className="flex items-center justify-between rounded-xl bg-offwhite p-4">
+                  <div>
+                    <span className="text-xs font-medium uppercase tracking-wider text-text-secondary">
+                      CBU
+                    </span>
+                    <p className="mt-0.5 text-sm font-semibold text-text-primary break-all">
+                      {bankDetails.cbu}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => copyToClipboard(bankDetails.cbu, 'cbu')}
+                    className="rounded-lg p-2 text-gold transition-colors hover:bg-gold/10"
+                  >
+                    {copied === 'cbu' ? (
+                      <Check className="h-5 w-5" />
+                    ) : (
+                      <Copy className="h-5 w-5" />
+                    )}
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => copyToClipboard(bankDetails.cbu, 'cbu')}
-                  className="rounded-lg p-2 text-gold transition-colors hover:bg-gold/10"
-                >
-                  {copied === 'cbu' ? (
-                    <Check className="h-5 w-5" />
-                  ) : (
-                    <Copy className="h-5 w-5" />
-                  )}
-                </button>
-              </div>
+              )}
 
               {/* Titular */}
               <p className="text-center text-xs text-text-secondary">

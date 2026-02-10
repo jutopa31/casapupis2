@@ -38,7 +38,7 @@ interface Toast {
 
 export default function UploadSection({ onUploadComplete }: UploadSectionProps) {
   const { guestName } = useAuth();
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
 
   const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
@@ -72,8 +72,8 @@ export default function UploadSection({ onUploadComplete }: UploadSectionProps) 
     setSelectedFiles((prev) => [...prev, ...newSelected]);
 
     // Reset inputs so the same file can be selected again if needed
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+    if (cameraInputRef.current) {
+      cameraInputRef.current.value = '';
     }
     if (galleryInputRef.current) {
       galleryInputRef.current.value = '';
@@ -224,7 +224,7 @@ export default function UploadSection({ onUploadComplete }: UploadSectionProps) 
       <div className="flex justify-center gap-3">
         <button
           type="button"
-          onClick={() => fileInputRef.current?.click()}
+          onClick={() => cameraInputRef.current?.click()}
           disabled={isUploading}
           className="group flex items-center gap-2 rounded-2xl px-6 py-4 text-white shadow-lg transition-all duration-200 hover:shadow-xl hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed"
           style={{ backgroundColor: '#C9A84C' }}
@@ -246,10 +246,9 @@ export default function UploadSection({ onUploadComplete }: UploadSectionProps) 
 
       {/* Hidden file inputs */}
       <input
-        ref={fileInputRef}
+        ref={cameraInputRef}
         type="file"
         accept="image/*"
-        multiple
         capture="environment"
         className="hidden"
         onChange={handleFileSelect}

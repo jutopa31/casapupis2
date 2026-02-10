@@ -22,7 +22,7 @@ export default function AccessCodeModal() {
     setError('');
     setIsSubmitting(true);
 
-    const correctCode = process.env.NEXT_PUBLIC_ACCESS_CODE;
+    const correctCode = process.env.NEXT_PUBLIC_ACCESS_CODE?.trim();
 
     // Si no hay código configurado, cualquier código es válido (modo preview)
     if (!correctCode || code.trim().toLowerCase() === correctCode.toLowerCase()) {

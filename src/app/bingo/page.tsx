@@ -15,7 +15,7 @@ export default function BingoPage() {
   const [completed, setCompleted] = useState<Record<number, BingoEntry>>({})
   const [isLoading, setIsLoading] = useState(true)
   const [uploading, setUploading] = useState<number | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const cameraInputRef = useRef<HTMLInputElement>(null)
   const galleryInputRef = useRef<HTMLInputElement>(null)
   const [activeChallengeId, setActiveChallengeId] = useState<number | null>(null)
   const [showSourcePicker, setShowSourcePicker] = useState(false)
@@ -54,7 +54,7 @@ export default function BingoPage() {
 
   function handlePickCamera() {
     setShowSourcePicker(false)
-    fileInputRef.current?.click()
+    cameraInputRef.current?.click()
   }
 
   function handlePickGallery() {
@@ -107,12 +107,8 @@ export default function BingoPage() {
     } finally {
       setUploading(null)
       setActiveChallengeId(null)
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''
-      }
-      if (galleryInputRef.current) {
-        galleryInputRef.current.value = ''
-      }
+      if (cameraInputRef.current) cameraInputRef.current.value = ''
+      if (galleryInputRef.current) galleryInputRef.current.value = ''
     }
   }
 
@@ -163,7 +159,7 @@ export default function BingoPage() {
       </header>
 
       <input
-        ref={fileInputRef}
+        ref={cameraInputRef}
         type="file"
         accept="image/*"
         capture="environment"
@@ -185,7 +181,7 @@ export default function BingoPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center"
+            className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm p-4 sm:items-center"
             onClick={handleCancelPicker}
           >
             <motion.div
