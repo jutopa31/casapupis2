@@ -1,8 +1,24 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Heart } from 'lucide-react'
+import { Heart, Music } from 'lucide-react'
 import { weddingConfig } from '@/config/wedding'
+
+/**
+ * Extracts a Spotify embed URL from a standard Spotify link.
+ * E.g. "https://open.spotify.com/track/ABC" → "https://open.spotify.com/embed/track/ABC"
+ */
+function toSpotifyEmbedUrl(url: string): string {
+  try {
+    const parsed = new URL(url)
+    if (parsed.hostname !== 'open.spotify.com') return url
+    // Insert /embed after the hostname if not already present
+    if (parsed.pathname.startsWith('/embed/')) return url
+    return `https://open.spotify.com/embed${parsed.pathname}?utm_source=generator&theme=0`
+  } catch {
+    return url
+  }
+}
 
 export default function NuestraHistoriaPage() {
   const { history } = weddingConfig
@@ -69,6 +85,26 @@ export default function NuestraHistoriaPage() {
                         className="w-full object-cover"
                         loading="lazy"
                       />
+                    </div>
+                  )}
+
+                  {milestone.spotifyUrl && (
+                    <div className="mt-3">
+                      <div className="mb-1.5 flex items-center gap-1.5 text-xs text-text-secondary">
+                        <Music className="h-3 w-3" />
+                        <span>Nuestra cancion de este momento</span>
+                      </div>
+                      <div className="overflow-hidden rounded-lg">
+                        <iframe
+                          src={toSpotifyEmbedUrl(milestone.spotifyUrl)}
+                          width="100%"
+                          height="80"
+                          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                          loading="lazy"
+                          className="border-0"
+                          title={`Spotify - ${milestone.title}`}
+                        />
+                      </div>
                     </div>
                   )}
                 </div>

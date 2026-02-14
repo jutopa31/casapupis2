@@ -38,6 +38,8 @@ export interface HistoryMilestone {
   title: string;
   description: string;
   imageUrl: string;
+  /** Spotify embed URL for a track/playlist associated with this milestone (optional) */
+  spotifyUrl?: string;
 }
 
 export interface BingoChallenge {
@@ -123,6 +125,8 @@ export const weddingConfig: WeddingConfig = {
       description:
         "El destino nos cruzo y desde ese momento supimos que algo especial estaba por comenzar.",
       imageUrl: "[COMPLETAR_IMAGE_URL]",
+      // Reemplazar con la canción que sonaba cuando se conocieron
+      spotifyUrl: "https://open.spotify.com/track/3n3Ppam7vgaVa1iaRUc9Lp",
     },
     {
       date: "[COMPLETAR_FECHA]",
@@ -130,6 +134,8 @@ export const weddingConfig: WeddingConfig = {
       description:
         "Nervios, risas y la certeza de que queriamos seguir conociéndonos.",
       imageUrl: "[COMPLETAR_IMAGE_URL]",
+      // Reemplazar con la canción de la primera cita
+      spotifyUrl: "https://open.spotify.com/track/1dGr1c8CrMLDpV6mPbImSI",
     },
     {
       date: "[COMPLETAR_FECHA]",
@@ -137,6 +143,8 @@ export const weddingConfig: WeddingConfig = {
       description:
         "Descubrimos que viajar juntos era tan natural como respirar. La aventura recien empezaba.",
       imageUrl: "[COMPLETAR_IMAGE_URL]",
+      // Reemplazar con la canción del viaje
+      spotifyUrl: "https://open.spotify.com/track/0u2P5u6lvoDfwTYjAADbn4",
     },
     {
       date: "[COMPLETAR_FECHA]",
@@ -144,6 +152,8 @@ export const weddingConfig: WeddingConfig = {
       description:
         "Armamos nuestro hogar, un lugar lleno de amor, proyectos y suenos compartidos.",
       imageUrl: "[COMPLETAR_IMAGE_URL]",
+      // Reemplazar con la canción de ese momento
+      spotifyUrl: "https://open.spotify.com/track/7qiZfU4dY1lWllzX7mPBI3",
     },
     {
       date: "[COMPLETAR_FECHA]",
@@ -151,6 +161,8 @@ export const weddingConfig: WeddingConfig = {
       description:
         "Con el corazon latiendo a mil, llego la pregunta mas importante. Y la respuesta fue si!",
       imageUrl: "[COMPLETAR_IMAGE_URL]",
+      // Reemplazar con la canción de la propuesta
+      spotifyUrl: "https://open.spotify.com/track/3KkXRkHbMCARz0aVfEt68P",
     },
     {
       date: "2026-02-21",
@@ -158,6 +170,8 @@ export const weddingConfig: WeddingConfig = {
       description:
         "El gran dia llego. Rodeados de quienes mas queremos, celebramos nuestro amor para siempre.",
       imageUrl: "[COMPLETAR_IMAGE_URL]",
+      // Reemplazar con "nuestra canción" o la del primer baile
+      spotifyUrl: "https://open.spotify.com/track/6ROHEr1PByNaSnSfXQjF72",
     },
   ],
 
