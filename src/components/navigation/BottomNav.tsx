@@ -33,7 +33,7 @@ const navItems: NavItem[] = [
   { label: 'Inicio', href: '/', icon: Home },
   { label: 'Fotos', href: '/fotos-invitados', icon: Camera },
   { label: 'Muro', href: '/muro', icon: MessageCircle },
-  { label: 'Confirmar', href: '/confirmar', icon: CheckCircle },
+  // { label: 'Confirmar', href: '/confirmar', icon: CheckCircle },
   { label: 'Menu', href: null, icon: Menu, action: 'menu' },
 ];
 

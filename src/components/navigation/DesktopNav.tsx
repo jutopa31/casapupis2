@@ -36,7 +36,7 @@ interface NavLink {
 const primaryLinks: NavLink[] = [
   { label: 'Inicio', href: '/', icon: Home },
   { label: 'Fotos', href: '/fotos-invitados', icon: Camera },
-  { label: 'Confirmar', href: '/confirmar', icon: CheckCircle },
+  // { label: 'Confirmar', href: '/confirmar', icon: CheckCircle },
   { label: 'Muro', href: '/muro', icon: MessageSquare },
 ];
 
@@ -46,7 +46,7 @@ const secondaryLinks: NavLink[] = [
   { label: 'Como Llegar', href: '/como-llegar', icon: MapPin },
   { label: 'Bingo Fotografico', href: '/bingo', icon: Grid3X3 },
   { label: 'Playlist', href: '/playlist', icon: ListMusic },
-  { label: 'Programa', href: '/programa', icon: Clock },
+  // { label: 'Programa', href: '/programa', icon: Clock },
   { label: 'Agradecimiento', href: '/agradecimiento', icon: HeartHandshake },
 ];
 

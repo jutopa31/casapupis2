@@ -1,7 +1,9 @@
 'use client';
 
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Trash2 } from 'lucide-react';
+import { getSupabase } from '@/lib/supabase';
 import type { FotoInvitado } from '@/types/database';
 
 // ---------------------------------------------------------------------------
@@ -11,6 +13,8 @@ import type { FotoInvitado } from '@/types/database';
 interface PhotoCardProps {
   foto: FotoInvitado;
   onClick: () => void;
+  canDelete?: boolean;
+  onDelete?: (fotoId: string) => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -31,11 +35,62 @@ function formatTimestamp(dateStr: string): string {
   }
 }
 
+/** Extract the storage file path from a full Supabase public URL */
+function extractStoragePath(url: string): string | null {
+  const marker = '/object/public/fotos-invitados/';
+  const idx = url.indexOf(marker);
+  if (idx === -1) return null;
+  return url.substring(idx + marker.length);
+}
+
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
-export default function PhotoCard({ foto, onClick }: PhotoCardProps) {
+export default function PhotoCard({ foto, onClick, canDelete, onDelete }: PhotoCardProps) {
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowConfirm(true);
+  };
+
+  const handleCancelDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowConfirm(false);
+  };
+
+  const handleConfirmDelete = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const supabase = getSupabase();
+    if (!supabase) return;
+
+    setIsDeleting(true);
+    try {
+      // Delete from storage
+      const filePath = extractStoragePath(foto.foto_url);
+      if (filePath) {
+        await supabase.storage.from('fotos-invitados').remove([filePath]);
+      }
+
+      // Delete from database
+      const { error } = await supabase
+        .from('fotos_invitados')
+        .delete()
+        .eq('id', foto.id);
+
+      if (error) throw error;
+
+      onDelete?.(foto.id);
+    } catch (err) {
+      console.error('Error eliminando foto:', err);
+    } finally {
+      setIsDeleting(false);
+      setShowConfirm(false);
+    }
+  };
+
   return (
     <motion.button
       type="button"
@@ -54,6 +109,57 @@ export default function PhotoCard({ foto, onClick }: PhotoCardProps) {
         loading="lazy"
         className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
       />
+
+      {/* Delete button */}
+      {canDelete && !showConfirm && (
+        <button
+          type="button"
+          onClick={handleDeleteClick}
+          className="absolute top-2 right-2 z-10 rounded-full bg-black/50 p-1.5 text-white opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100 hover:bg-red-600"
+          aria-label="Eliminar foto"
+        >
+          <Trash2 size={14} />
+        </button>
+      )}
+
+      {/* Delete confirmation overlay */}
+      <AnimatePresence>
+        {showConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/70 px-3"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {isDeleting ? (
+              <div className="h-6 w-6 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+            ) : (
+              <>
+                <p className="text-center text-xs font-medium text-white">
+                  Eliminar esta foto?
+                </p>
+                <div className="mt-3 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={handleCancelDelete}
+                    className="rounded-lg bg-white/20 px-3 py-1.5 text-xs font-medium text-white hover:bg-white/30"
+                  >
+                    No
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleConfirmDelete}
+                    className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700"
+                  >
+                    Si, eliminar
+                  </button>
+                </div>
+              </>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Bottom gradient overlay */}
       <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent px-3 pb-3 pt-10">

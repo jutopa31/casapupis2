@@ -45,12 +45,12 @@ const drawerLinks: DrawerLink[] = [
   { label: 'Nuestra Historia', href: '/nuestra-historia', icon: BookHeart },
   { label: 'Galeria', href: '/galeria', icon: Images },
   { label: 'Fotos de Invitados', href: '/fotos-invitados', icon: Camera },
-  { label: 'Confirmar Asistencia', href: '/confirmar', icon: CheckCircle },
+  // { label: 'Confirmar Asistencia', href: '/confirmar', icon: CheckCircle },
   { label: 'Como Llegar', href: '/como-llegar', icon: MapPin },
   { label: 'Muro de Mensajes', href: '/muro', icon: MessageSquare },
   { label: 'Bingo Fotografico', href: '/bingo', icon: Grid3X3 },
   { label: 'Playlist', href: '/playlist', icon: ListMusic },
-  { label: 'Programa', href: '/programa', icon: Clock },
+  // { label: 'Programa', href: '/programa', icon: Clock },
   { label: 'Agradecimiento', href: '/agradecimiento', icon: HeartHandshake },
 ];
 

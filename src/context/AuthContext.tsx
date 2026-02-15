@@ -1,6 +1,7 @@
 'use client'
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import { getSupabase } from '@/lib/supabase'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -8,11 +9,12 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 
 interface AuthState {
   isAuthenticated: boolean
+  guestId: string | null
   guestName: string | null
 }
 
 interface AuthContextValue extends AuthState {
-  login: (name: string, code: string) => boolean
+  login: (name: string) => Promise<{ success: boolean; error?: string }>
   logout: () => void
 }
 
@@ -31,6 +33,7 @@ const STORAGE_KEY = 'casapupis_auth'
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [auth, setAuth] = useState<AuthState>({
     isAuthenticated: false,
+    guestId: null,
     guestName: null,
   })
 
@@ -49,27 +52,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  const login = useCallback((name: string, code: string): boolean => {
-    const expectedCode = process.env.NEXT_PUBLIC_ACCESS_CODE?.trim()
-    // Si no hay código configurado, cualquier código es válido (modo preview)
-    if (!expectedCode || code.trim().toLowerCase() === expectedCode.toLowerCase()) {
+  const login = useCallback(async (name: string): Promise<{ success: boolean; error?: string }> => {
+    const trimmed = name.trim()
+    if (!trimmed) {
+      return { success: false, error: 'Por favor ingresa tu nombre.' }
+    }
+
+    const supabase = getSupabase()
+    if (!supabase) {
+      // Modo preview sin Supabase: dejar entrar con nombre libre
       const newState: AuthState = {
         isAuthenticated: true,
-        guestName: name.trim(),
+        guestId: null,
+        guestName: trimmed,
       }
       setAuth(newState)
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(newState))
-      } catch {
-        // localStorage might be unavailable
-      }
-      return true
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(newState)) } catch { /* */ }
+      return { success: true }
     }
-    return false
+
+    // Buscar invitado por nombre (case-insensitive)
+    const { data, error } = await supabase
+      .from('invitados')
+      .select('id, nombre')
+      .ilike('nombre', trimmed)
+      .limit(1)
+      .single()
+
+    if (error || !data) {
+      return {
+        success: false,
+        error: 'No encontramos tu nombre en la lista de invitados. Verifica que esté escrito exactamente como en la invitación.',
+      }
+    }
+
+    const newState: AuthState = {
+      isAuthenticated: true,
+      guestId: data.id,
+      guestName: data.nombre, // usar el nombre tal cual está en la DB
+    }
+    setAuth(newState)
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(newState)) } catch { /* */ }
+    return { success: true }
   }, [])
 
   const logout = useCallback(() => {
-    setAuth({ isAuthenticated: false, guestName: null })
+    setAuth({ isAuthenticated: false, guestId: null, guestName: null })
     try {
       localStorage.removeItem(STORAGE_KEY)
     } catch {

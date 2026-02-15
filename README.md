@@ -1,4 +1,4 @@
-# Casapupis2 - Boda Julian & Jaqueline
+# Casapupis2 - Boda Julian & Jacqueline
 
 Web app para nuestro casamiento el 21 de febrero de 2026.
 

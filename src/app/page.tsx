@@ -13,6 +13,9 @@ import {
   ChevronDown,
   ArrowRight,
   Lock,
+  BookHeart,
+  Images,
+  HeartHandshake,
 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 
@@ -42,17 +45,29 @@ const WEDDING_DATE = new Date('2026-02-21T20:00:00-03:00')
 
 const quickAccessCards: QuickAccessCard[] = [
   {
+    label: 'Nosotros',
+    description: 'Conoce como empezo todo',
+    href: '/nuestra-historia',
+    icon: <BookHeart className="h-6 w-6" />,
+  },
+  {
+    label: 'Galeria',
+    description: 'Las mejores fotos juntos',
+    href: '/galeria',
+    icon: <Images className="h-6 w-6" />,
+  },
+  {
     label: 'Fotos de Invitados',
     description: 'Comparti tus mejores fotos de la fiesta',
     href: '/fotos-invitados',
     icon: <Camera className="h-6 w-6" />,
   },
-  {
-    label: 'Confirmar Asistencia',
-    description: 'Confirma tu presencia al evento',
-    href: '/confirmar',
-    icon: <CheckCircle className="h-6 w-6" />,
-  },
+  // {
+  //   label: 'Confirmar Asistencia',
+  //   description: 'Confirma tu presencia al evento',
+  //   href: '/confirmar',
+  //   icon: <CheckCircle className="h-6 w-6" />,
+  // },
   {
     label: 'Muro de Mensajes',
     description: 'Dejanos un mensaje o deseo especial',
@@ -76,6 +91,12 @@ const quickAccessCards: QuickAccessCard[] = [
     description: 'Completa los desafios con fotos',
     href: '/bingo',
     icon: <Grid3X3 className="h-6 w-6" />,
+  },
+  {
+    label: 'Agradecimiento',
+    description: 'Un mensaje especial para vos',
+    href: '/agradecimiento',
+    icon: <HeartHandshake className="h-6 w-6" />,
   },
 ]
 
@@ -175,11 +196,11 @@ function AccessCodeModal({
 }) {
   const { login } = useAuth()
   const [name, setName] = useState('')
-  const [code, setCode] = useState('')
   const [error, setError] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
 
@@ -187,17 +208,16 @@ function AccessCodeModal({
       setError('Por favor ingresa tu nombre')
       return
     }
-    if (!code.trim()) {
-      setError('Por favor ingresa el codigo de acceso')
-      return
-    }
 
-    const success = login(name, code)
-    if (success) {
+    setIsSubmitting(true)
+    const result = await login(name.trim())
+    setIsSubmitting(false)
+
+    if (result.success) {
       setIsOpen(false)
       onSuccess()
     } else {
-      setError('Codigo de acceso incorrecto')
+      setError(result.error ?? 'No se pudo ingresar')
     }
   }
 
@@ -234,22 +254,15 @@ function AccessCodeModal({
           Bienvenido/a
         </h3>
         <p className="mb-6 text-center text-sm text-text-secondary">
-          Ingresa tu nombre y el codigo de acceso
+          Ingresa tu nombre tal como aparece en la invitacion
         </p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <input
             type="text"
-            placeholder="Tu nombre"
+            placeholder="Tu nombre completo"
             value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="rounded-lg border border-gold/20 bg-white px-4 py-3 text-sm text-text-primary outline-none transition-colors placeholder:text-text-secondary/50 focus:border-gold/50"
-          />
-          <input
-            type="text"
-            placeholder="Codigo de acceso"
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
+            onChange={(e) => { setName(e.target.value); setError('') }}
             className="rounded-lg border border-gold/20 bg-white px-4 py-3 text-sm text-text-primary outline-none transition-colors placeholder:text-text-secondary/50 focus:border-gold/50"
           />
 
@@ -259,9 +272,10 @@ function AccessCodeModal({
 
           <button
             type="submit"
-            className="rounded-lg bg-gold px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-gold/90"
+            disabled={isSubmitting || !name.trim()}
+            className="rounded-lg bg-gold px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-gold/90 disabled:opacity-50"
           >
-            Ingresar
+            {isSubmitting ? 'Buscando...' : 'Ingresar'}
           </button>
 
           <button
@@ -301,10 +315,10 @@ function QuickAccessGrid({ guestName }: { guestName: string }) {
           transition={{ duration: 0.6, delay: 0.1 }}
           className="mb-10 text-center text-sm text-text-secondary md:text-base"
         >
-          Explora todo lo que preparamos para vos
+          Mira lo que armamos
         </motion.p>
 
-        <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-3">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
           {quickAccessCards.map((card, i) => (
             <motion.div
               key={card.href}
@@ -375,7 +389,7 @@ export default function Home() {
             animate="visible"
             className="font-serif text-4xl font-semibold text-gold md:text-6xl lg:text-7xl"
           >
-            Julian & Jaqueline
+            Julian & Jacqueline
           </motion.h1>
 
           {/* Decorative Divider */}

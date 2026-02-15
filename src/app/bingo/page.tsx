@@ -78,9 +78,10 @@ export default function BingoPage() {
 
     try {
       const compressed = await imageCompression(file, {
-        maxSizeMB: 1,
-        maxWidthOrHeight: 1920,
+        maxSizeMB: 1.5,
+        maxWidthOrHeight: 2048,
         useWebWorker: true,
+        initialQuality: 0.85,
       })
 
       const fileName = `${guestName}_${activeChallengeId}_${Date.now()}.${compressed.type.split('/')[1] || 'jpg'}`
