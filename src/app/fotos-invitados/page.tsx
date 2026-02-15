@@ -4,10 +4,13 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { ImageIcon, Camera } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
+import { useAuth } from '@/context/AuthContext';
 import type { FotoInvitado } from '@/types/database';
 import UploadSection from '@/components/fotos/UploadSection';
 import PhotoCard from '@/components/fotos/PhotoCard';
 import PhotoLightbox from '@/components/fotos/PhotoLightbox';
+
+const ADMIN_NAMES = ['Julian', 'Jacqueline'];
 
 // ---------------------------------------------------------------------------
 // Skeleton card for loading state
@@ -33,9 +36,18 @@ function SkeletonCard() {
 // Page component
 // ---------------------------------------------------------------------------
 
+const PAGE_SIZE = 20;
+
 export default function FotosInvitadosPage() {
+  const { guestName } = useAuth();
+  const isAdmin = ADMIN_NAMES.some(
+    (name) => guestName?.toLowerCase() === name.toLowerCase()
+  );
+
   const [photos, setPhotos] = useState<FotoInvitado[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Lightbox state
@@ -43,10 +55,10 @@ export default function FotosInvitadosPage() {
   const [lightboxIndex, setLightboxIndex] = useState(0);
 
   // -----------------------------------------------------------------------
-  // Load photos
+  // Load photos (paginated)
   // -----------------------------------------------------------------------
 
-  const loadPhotos = useCallback(async () => {
+  const loadPhotos = useCallback(async (offset = 0, append = false) => {
     const supabase = getSupabase();
     if (!supabase) {
       setIsLoading(false);
@@ -57,24 +69,39 @@ export default function FotosInvitadosPage() {
       const { data, error: dbError } = await supabase
         .from('fotos_invitados')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .range(offset, offset + PAGE_SIZE - 1);
 
       if (dbError) throw dbError;
-      setPhotos(data ?? []);
+
+      const fetched = data ?? [];
+      setHasMore(fetched.length === PAGE_SIZE);
+
+      if (append) {
+        setPhotos((prev) => [...prev, ...fetched]);
+      } else {
+        setPhotos(fetched);
+      }
     } catch (err) {
       console.error('Error cargando fotos:', err);
       setError('No se pudieron cargar las fotos. Intenta recargar la pagina.');
     } finally {
       setIsLoading(false);
+      setIsLoadingMore(false);
     }
   }, []);
+
+  const loadMore = useCallback(() => {
+    setIsLoadingMore(true);
+    loadPhotos(photos.length, true);
+  }, [loadPhotos, photos.length]);
 
   // -----------------------------------------------------------------------
   // Initial load + realtime subscription
   // -----------------------------------------------------------------------
 
   useEffect(() => {
-    loadPhotos();
+    loadPhotos(0, false);
 
     const supabase = getSupabase();
     if (!supabase) return;
@@ -92,7 +119,6 @@ export default function FotosInvitadosPage() {
         (payload) => {
           const newPhoto = payload.new as FotoInvitado;
           setPhotos((prev) => {
-            // Avoid duplicates (e.g. if the uploader already added it)
             if (prev.some((p) => p.id === newPhoto.id)) return prev;
             return [newPhoto, ...prev];
           });
@@ -104,6 +130,14 @@ export default function FotosInvitadosPage() {
       supabase.removeChannel(channel);
     };
   }, [loadPhotos]);
+
+  // -----------------------------------------------------------------------
+  // Delete handler
+  // -----------------------------------------------------------------------
+
+  const handleDeletePhoto = useCallback((fotoId: string) => {
+    setPhotos((prev) => prev.filter((p) => p.id !== fotoId));
+  }, []);
 
   // -----------------------------------------------------------------------
   // Lightbox handlers
@@ -208,15 +242,44 @@ export default function FotosInvitadosPage() {
 
         {/* Photo grid */}
         {!isLoading && !error && photos.length > 0 && (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            {photos.map((foto, index) => (
-              <PhotoCard
-                key={foto.id}
-                foto={foto}
-                onClick={() => openLightbox(index)}
-              />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+              {photos.map((foto, index) => (
+                <PhotoCard
+                  key={foto.id}
+                  foto={foto}
+                  onClick={() => openLightbox(index)}
+                  canDelete={isAdmin || foto.nombre_invitado === guestName}
+                  onDelete={handleDeletePhoto}
+                />
+              ))}
+            </div>
+
+            {/* Load more */}
+            {hasMore && (
+              <div className="mt-6 flex justify-center">
+                <button
+                  type="button"
+                  onClick={loadMore}
+                  disabled={isLoadingMore}
+                  className="rounded-xl px-8 py-3 text-sm font-semibold transition-all hover:brightness-110 disabled:opacity-50"
+                  style={{ backgroundColor: '#C9A84C', color: '#fff' }}
+                >
+                  {isLoadingMore ? (
+                    <span className="flex items-center gap-2">
+                      <div
+                        className="h-4 w-4 animate-spin rounded-full border-2"
+                        style={{ borderColor: 'rgba(255,255,255,0.3)', borderTopColor: '#fff' }}
+                      />
+                      Cargando...
+                    </span>
+                  ) : (
+                    'Ver mas fotos'
+                  )}
+                </button>
+              </div>
+            )}
+          </>
         )}
       </section>
 

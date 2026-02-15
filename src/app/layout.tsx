@@ -17,7 +17,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Julian & Jaqueline | 21.02.2026",
+  title: "Julian & Jacqueline | 21.02.2026",
   description: "Nuestra boda - 21 de febrero de 2026",
   manifest: "/manifest.json",
 };

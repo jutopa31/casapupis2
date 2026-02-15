@@ -1,5 +1,5 @@
 // =============================================================================
-// Wedding Configuration - Julian & Jaqueline
+// Wedding Configuration - Julian & Jacqueline
 // Centralized configuration for the wedding web application
 // =============================================================================
 
@@ -38,6 +38,7 @@ export interface HistoryMilestone {
   title: string;
   description: string;
   imageUrl: string;
+  spotifyUrl?: string;
 }
 
 export interface BingoChallenge {
@@ -79,7 +80,7 @@ export const weddingConfig: WeddingConfig = {
   // -------------------------------------------------------------------------
   couple: {
     groomName: "Julian",
-    brideName: "Jaqueline",
+    brideName: "Jacqueline",
     weddingDate: "2026-02-21",
     location: {
       venue: "Quinta de Vero y Pablo",
@@ -101,7 +102,7 @@ export const weddingConfig: WeddingConfig = {
   bankDetails: {
     alias: "casapupis",
     cbu: "",
-    holderName: "Julian & Jaqueline",
+    holderName: "Julian & Jacqueline",
   },
 
   // -------------------------------------------------------------------------

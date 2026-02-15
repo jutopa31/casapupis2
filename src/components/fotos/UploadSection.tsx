@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Camera, Upload, X, CheckCircle, AlertCircle, ImagePlus } from 'lucide-react';
 import imageCompression from 'browser-image-compression';
@@ -36,6 +36,8 @@ interface Toast {
 // Component
 // ---------------------------------------------------------------------------
 
+const PHOTO_LIMIT_PER_GUEST = 50;
+
 export default function UploadSection({ onUploadComplete }: UploadSectionProps) {
   const { guestName } = useAuth();
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -46,6 +48,27 @@ export default function UploadSection({ onUploadComplete }: UploadSectionProps) 
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<UploadProgress[]>([]);
   const [toast, setToast] = useState<Toast | null>(null);
+  const [uploadedCount, setUploadedCount] = useState<number | null>(null);
+
+  // -----------------------------------------------------------------------
+  // Load uploaded count for this guest
+  // -----------------------------------------------------------------------
+
+  const loadUploadedCount = useCallback(async () => {
+    const supabase = getSupabase();
+    if (!supabase || !guestName) return;
+    const { count } = await supabase
+      .from('fotos_invitados')
+      .select('*', { count: 'exact', head: true })
+      .eq('nombre_invitado', guestName);
+    setUploadedCount(count ?? 0);
+  }, [guestName]);
+
+  useEffect(() => {
+    loadUploadedCount();
+  }, [loadUploadedCount]);
+
+  const remaining = uploadedCount !== null ? PHOTO_LIMIT_PER_GUEST - uploadedCount : PHOTO_LIMIT_PER_GUEST;
 
   // -----------------------------------------------------------------------
   // Toast helper
@@ -64,7 +87,20 @@ export default function UploadSection({ onUploadComplete }: UploadSectionProps) 
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    const newSelected: SelectedFile[] = Array.from(files).map((file) => ({
+    // Enforce photo limit per guest
+    const availableSlots = remaining - selectedFiles.length;
+    if (availableSlots <= 0) {
+      showToast('error', `Ya alcanzaste el limite de ${PHOTO_LIMIT_PER_GUEST} fotos`);
+      e.target.value = '';
+      return;
+    }
+
+    const filesToAdd = Array.from(files).slice(0, availableSlots);
+    if (filesToAdd.length < files.length) {
+      showToast('error', `Solo podes agregar ${availableSlots} foto${availableSlots > 1 ? 's' : ''} mas (limite: ${PHOTO_LIMIT_PER_GUEST})`);
+    }
+
+    const newSelected: SelectedFile[] = filesToAdd.map((file) => ({
       file,
       previewUrl: URL.createObjectURL(file),
     }));
@@ -124,9 +160,10 @@ export default function UploadSection({ onUploadComplete }: UploadSectionProps) 
         setUploadProgress([...progressList]);
 
         const compressed = await imageCompression(file, {
-          maxSizeMB: 1.5,
-          maxWidthOrHeight: 1920,
+          maxSizeMB: 2,
+          maxWidthOrHeight: 2048,
           useWebWorker: true,
+          initialQuality: 0.85,
         });
 
         progressList[i] = { ...progressList[i], progress: 40, status: 'uploading' };
@@ -179,6 +216,11 @@ export default function UploadSection({ onUploadComplete }: UploadSectionProps) 
 
     setIsUploading(false);
 
+    // Refresh count after upload
+    if (successCount > 0) {
+      setUploadedCount((prev) => (prev ?? 0) + successCount);
+    }
+
     if (errorCount === 0) {
       showToast('success', `${successCount} foto${successCount > 1 ? 's' : ''} subida${successCount > 1 ? 's' : ''} correctamente`);
       clearSelection();
@@ -220,12 +262,23 @@ export default function UploadSection({ onUploadComplete }: UploadSectionProps) 
         )}
       </AnimatePresence>
 
+      {/* Photo limit indicator */}
+      {uploadedCount !== null && (
+        <div className="mb-3 text-center">
+          <span className={`text-xs font-medium ${remaining <= 5 ? 'text-amber-600' : 'text-stone-400'}`}>
+            {remaining > 0
+              ? `${remaining} foto${remaining !== 1 ? 's' : ''} disponible${remaining !== 1 ? 's' : ''} de ${PHOTO_LIMIT_PER_GUEST}`
+              : `Alcanzaste el limite de ${PHOTO_LIMIT_PER_GUEST} fotos`}
+          </span>
+        </div>
+      )}
+
       {/* Upload trigger buttons */}
       <div className="flex justify-center gap-3">
         <button
           type="button"
           onClick={() => cameraInputRef.current?.click()}
-          disabled={isUploading}
+          disabled={isUploading || remaining <= 0}
           className="group flex items-center gap-2 rounded-2xl px-6 py-4 text-white shadow-lg transition-all duration-200 hover:shadow-xl hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed"
           style={{ backgroundColor: '#C9A84C' }}
         >
@@ -235,7 +288,7 @@ export default function UploadSection({ onUploadComplete }: UploadSectionProps) 
         <button
           type="button"
           onClick={() => galleryInputRef.current?.click()}
-          disabled={isUploading}
+          disabled={isUploading || remaining <= 0}
           className="group flex items-center gap-2 rounded-2xl border-2 px-6 py-4 shadow-lg transition-all duration-200 hover:shadow-xl hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed"
           style={{ borderColor: '#C9A84C', color: '#C9A84C' }}
         >
