@@ -110,6 +110,13 @@ export default function PhotoCard({ foto, onClick, canDelete, onDelete }: PhotoC
         className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
       />
 
+      {/* Bingo badge */}
+      {foto.bingo_challenge_id !== null && (
+        <span className="absolute left-2 top-2 z-10 rounded-full bg-[#C9A84C]/95 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-white shadow-sm">
+          Bingo
+        </span>
+      )}
+
       {/* Delete button */}
       {canDelete && !showConfirm && (
         <button

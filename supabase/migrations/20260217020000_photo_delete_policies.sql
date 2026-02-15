@@ -7,11 +7,13 @@
 -- =============================================
 
 -- Allow delete on fotos_invitados table
+DROP POLICY IF EXISTS "Public delete access on fotos_invitados" ON fotos_invitados;
 CREATE POLICY "Public delete access on fotos_invitados"
   ON fotos_invitados FOR DELETE
   USING (true);
 
 -- Allow delete on fotos-invitados storage bucket
+DROP POLICY IF EXISTS "Public delete fotos-invitados" ON storage.objects;
 CREATE POLICY "Public delete fotos-invitados"
   ON storage.objects FOR DELETE
   USING (bucket_id = 'fotos-invitados');

@@ -96,11 +96,30 @@ export default function BingoPage() {
         .from('bingo')
         .getPublicUrl(fileName)
 
-      await supabase.from('bingo_entries').insert({
+      const { error: bingoInsertError } = await supabase.from('bingo_entries').insert({
         nombre_invitado: guestName ?? 'Anonimo',
         challenge_id: activeChallengeId,
         foto_url: urlData.publicUrl,
       })
+      if (bingoInsertError) throw bingoInsertError
+
+      const challenge = bingoChallenges.find((item) => item.id === activeChallengeId)
+      const bingoCaption = `Bingo: ${challenge?.challenge ?? 'Desafio completado'}`
+
+      try {
+        const { error: galleryInsertError } = await supabase.from('fotos_invitados').insert({
+          nombre_invitado: guestName ?? 'Anonimo',
+          foto_url: urlData.publicUrl,
+          caption: bingoCaption,
+          bingo_challenge_id: activeChallengeId,
+        })
+
+        if (galleryInsertError) {
+          console.error('Error duplicando foto de bingo en galeria:', galleryInsertError)
+        }
+      } catch (galleryError) {
+        console.error('Error inesperado al duplicar foto de bingo en galeria:', galleryError)
+      }
 
       await loadCompleted()
     } catch (err) {

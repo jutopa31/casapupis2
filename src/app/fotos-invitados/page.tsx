@@ -249,7 +249,10 @@ export default function FotosInvitadosPage() {
                   key={foto.id}
                   foto={foto}
                   onClick={() => openLightbox(index)}
-                  canDelete={isAdmin || foto.nombre_invitado === guestName}
+                  canDelete={
+                    foto.bingo_challenge_id === null &&
+                    (isAdmin || foto.nombre_invitado === guestName)
+                  }
                   onDelete={handleDeletePhoto}
                 />
               ))}

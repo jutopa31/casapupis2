@@ -17,14 +17,16 @@ CREATE TABLE IF NOT EXISTS invitados (
 -- Allow public read so the login lookup works with anon key
 ALTER TABLE invitados ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Anyone can read invitados" ON invitados;
 CREATE POLICY "Anyone can read invitados"
   ON invitados FOR SELECT
   USING (true);
 
 -- Only service role can insert/update/delete
+DROP POLICY IF EXISTS "Service role manages invitados" ON invitados;
 CREATE POLICY "Service role manages invitados"
   ON invitados FOR ALL
   USING (auth.role() = 'service_role');
 
 -- Index for fast name lookups (case-insensitive)
-CREATE INDEX idx_invitados_nombre_lower ON invitados (lower(nombre));
+CREATE INDEX IF NOT EXISTS idx_invitados_nombre_lower ON invitados (lower(nombre));
