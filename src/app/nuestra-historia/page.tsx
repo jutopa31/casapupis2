@@ -299,7 +299,7 @@ export default function NuestraHistoriaPage() {
                   </div>
 
                   {/* Edit mode controls */}
-                  {isEditMode && isFromSupabase && (
+                  {isEditMode && (
                     <div
                       className="absolute inset-x-0 top-0 flex items-center justify-between p-2"
                       onClick={(e) => e.stopPropagation()}
@@ -347,7 +347,7 @@ export default function NuestraHistoriaPage() {
       </section>
 
       {/* Floating add button (edit mode) */}
-      {isEditMode && isFromSupabase && (
+      {isEditMode && (
         <motion.button
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
