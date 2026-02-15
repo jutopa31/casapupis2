@@ -69,3 +69,15 @@ export interface CombiEntry {
   created_at: string
   updated_at: string
 }
+
+export interface HistoriaMilestone {
+  id: string
+  orden: number
+  date: string | null
+  title: string
+  description: string | null
+  image_url: string | null
+  spotify_url: string | null
+  created_at: string
+  updated_at: string
+}
