@@ -33,9 +33,12 @@ function toSpotifyEmbedUrl(url: string): string {
   try {
     const u = new URL(url)
     if (u.hostname === 'open.spotify.com') {
-      const pathParts = u.pathname.split('/')
-      if (pathParts.length >= 3) {
-        return `https://open.spotify.com/embed/${pathParts[1]}/${pathParts[2]}?utm_source=generator&theme=0`
+      // Filter out locale segments like /intl-es/
+      const pathParts = u.pathname.split('/').filter(
+        (p) => p && !/^intl-/i.test(p)
+      )
+      if (pathParts.length >= 2) {
+        return `https://open.spotify.com/embed/${pathParts[0]}/${pathParts[1]}?utm_source=generator&theme=0`
       }
     }
   } catch {
