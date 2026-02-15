@@ -38,6 +38,7 @@ export interface HistoryMilestone {
   title: string;
   description: string;
   imageUrl: string;
+  spotifyUrl?: string;
 }
 
 export interface BingoChallenge {

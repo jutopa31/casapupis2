@@ -47,3 +47,37 @@ export interface FotoInvitado {
   caption: string | null
   created_at: string
 }
+
+export interface Invitado {
+  id: string
+  nombre: string
+  grupo_familiar: string | null
+  mesa: number | null
+  confirmado: boolean
+  cantidad_personas: number
+  created_at: string
+}
+
+export interface CombiEntry {
+  id: string
+  nombre: string
+  ida: boolean
+  vuelta: boolean
+  cantidad_personas: number
+  pago_confirmado: boolean
+  mensaje: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface HistoriaMilestone {
+  id: string
+  orden: number
+  date: string | null
+  title: string
+  description: string | null
+  image_url: string | null
+  spotify_url: string | null
+  created_at: string
+  updated_at: string
+}
