@@ -115,7 +115,7 @@ export default function PhotoCard({ foto, onClick, canDelete, onDelete }: PhotoC
         <button
           type="button"
           onClick={handleDeleteClick}
-          className="absolute top-2 right-2 z-10 rounded-full bg-black/50 p-1.5 text-white opacity-0 transition-opacity group-hover:opacity-100 focus:opacity-100 hover:bg-red-600"
+          className="absolute top-2 right-2 z-10 rounded-full bg-black/50 p-1.5 text-white opacity-100 md:opacity-0 transition-opacity md:group-hover:opacity-100 focus:opacity-100 hover:bg-red-600"
           aria-label="Eliminar foto"
         >
           <Trash2 size={14} />
