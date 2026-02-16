@@ -1,21 +1,27 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { motion } from 'framer-motion'
-import { Send, MessageSquare } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Send, MessageSquare, Trash2 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { getSupabase } from '@/lib/supabase'
 import type { Mensaje } from '@/types/database'
 
 const EMOJIS = ['❤️', '🥂', '🎉', '💍', '✨', '🥰']
+const ADMIN_NAMES = ['Julian', 'Jacqueline']
 
 export default function MuroPage() {
   const { guestName } = useAuth()
+  const isAdmin = ADMIN_NAMES.some(
+    (name) => guestName?.toLowerCase() === name.toLowerCase()
+  )
   const [mensajes, setMensajes] = useState<Mensaje[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [texto, setTexto] = useState('')
   const [emoji, setEmoji] = useState('❤️')
   const [submitting, setSubmitting] = useState(false)
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const loadMensajes = useCallback(async () => {
     const supabase = getSupabase()
@@ -73,6 +79,23 @@ export default function MuroPage() {
     }
     setTexto('')
     setSubmitting(false)
+  }
+
+  async function handleDeleteMsg(id: string) {
+    const supabase = getSupabase()
+    if (!supabase) return
+
+    setDeletingId(id)
+    try {
+      const { error } = await supabase.from('mensajes').delete().eq('id', id)
+      if (error) throw error
+      setMensajes((prev) => prev.filter((m) => m.id !== id))
+    } catch (err) {
+      console.error('Error eliminando mensaje:', err)
+    } finally {
+      setDeletingId(null)
+      setConfirmDeleteId(null)
+    }
   }
 
   return (
@@ -173,33 +196,86 @@ export default function MuroPage() {
         )}
 
         <div className="space-y-4">
-          {mensajes.map((msg, i) => (
-            <motion.div
-              key={msg.id}
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.05 }}
-              className="rounded-xl border border-gold/10 bg-white p-5 shadow-sm"
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold text-text-primary">
-                  {msg.nombre}
-                </span>
-                <span className="text-lg">{msg.emoji}</span>
-              </div>
-              <p className="mt-2 text-sm leading-relaxed text-text-secondary">
-                {msg.mensaje}
-              </p>
-              <p className="mt-3 text-xs text-stone-400">
-                {new Date(msg.created_at).toLocaleDateString('es-AR', {
-                  day: 'numeric',
-                  month: 'short',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}
-              </p>
-            </motion.div>
-          ))}
+          {mensajes.map((msg, i) => {
+            const canDelete =
+              isAdmin || msg.nombre.toLowerCase() === guestName?.toLowerCase()
+
+            return (
+              <motion.div
+                key={msg.id}
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.05 }}
+                className="group relative overflow-hidden rounded-xl border border-gold/10 bg-white p-5 shadow-sm"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold text-text-primary">
+                    {msg.nombre}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    {canDelete && confirmDeleteId !== msg.id && (
+                      <button
+                        type="button"
+                        onClick={() => setConfirmDeleteId(msg.id)}
+                        className="rounded-full p-1.5 text-stone-300 opacity-100 transition-all md:opacity-0 md:group-hover:opacity-100 hover:bg-red-50 hover:text-red-500 focus:opacity-100"
+                        aria-label="Eliminar mensaje"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    )}
+                    <span className="text-lg">{msg.emoji}</span>
+                  </div>
+                </div>
+                <p className="mt-2 text-sm leading-relaxed text-text-secondary">
+                  {msg.mensaje}
+                </p>
+                <p className="mt-3 text-xs text-stone-400">
+                  {new Date(msg.created_at).toLocaleDateString('es-AR', {
+                    day: 'numeric',
+                    month: 'short',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </p>
+
+                {/* Delete confirmation overlay */}
+                <AnimatePresence>
+                  {confirmDeleteId === msg.id && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="absolute inset-0 z-10 flex items-center justify-center bg-black/70 px-4"
+                    >
+                      {deletingId === msg.id ? (
+                        <div className="h-6 w-6 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                      ) : (
+                        <div className="flex items-center gap-3">
+                          <p className="text-xs font-medium text-white">
+                            Eliminar este mensaje?
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => setConfirmDeleteId(null)}
+                            className="rounded-lg bg-white/20 px-3 py-1.5 text-xs font-medium text-white hover:bg-white/30"
+                          >
+                            No
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteMsg(msg.id)}
+                            className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700"
+                          >
+                            Si, eliminar
+                          </button>
+                        </div>
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            )
+          })}
         </div>
       </section>
     </div>
