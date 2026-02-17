@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Playfair_Display, Inter } from "next/font/google";
 import { AuthProvider } from "@/context/AuthContext";
 import AppShell from "@/components/AppShell";
+import ServiceWorkerRegistrar from "@/components/ServiceWorkerRegistrar";
 import "./globals.css";
 
 const playfairDisplay = Playfair_Display({
@@ -36,6 +37,7 @@ export default function RootLayout({
   return (
     <html lang="es" className={`${inter.variable} ${playfairDisplay.variable}`}>
       <body className={`${inter.className} antialiased`}>
+        <ServiceWorkerRegistrar />
         <AuthProvider>
           <AppShell>{children}</AppShell>
         </AuthProvider>

@@ -17,6 +17,7 @@ import {
   HeartHandshake,
 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
+import InstallAppButton from '@/components/InstallAppButton'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -351,6 +352,17 @@ function QuickAccessGrid({ guestName }: { guestName: string }) {
               </Link>
             </motion.div>
           ))}
+
+          {/* Install App — inside the grid as last card */}
+          <motion.div
+            custom={quickAccessCards.length}
+            variants={cardVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+          >
+            <InstallAppButton variant="card" />
+          </motion.div>
         </div>
       </div>
     </section>
