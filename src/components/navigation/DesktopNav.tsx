@@ -17,6 +17,7 @@ import {
   HeartHandshake,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import InstallAppButton from '@/components/InstallAppButton';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -162,6 +163,9 @@ export default function DesktopNav() {
                     </Link>
                   );
                 })}
+                <div className="border-t border-stone-100 mt-1 pt-1 px-1">
+                  <InstallAppButton />
+                </div>
               </div>
             )}
           </div>

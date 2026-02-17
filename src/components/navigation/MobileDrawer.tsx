@@ -17,6 +17,7 @@ import {
   HeartHandshake,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import InstallAppButton from '@/components/InstallAppButton';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -170,6 +171,11 @@ export default function MobileDrawer({
                 })}
               </ul>
             </nav>
+
+            {/* Install App */}
+            <div className="px-4 pb-2">
+              <InstallAppButton />
+            </div>
 
             {/* Footer */}
             <div className="px-6 py-4 border-t border-stone-100 text-center">
