@@ -9,6 +9,18 @@ import { weddingConfig } from '@/config/wedding'
 import type { BingoEntry } from '@/types/database'
 import imageCompression from 'browser-image-compression'
 
+function sanitizeFileToken(value: string): string {
+  const normalized = value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+
+  return normalized || 'anonimo'
+}
+
 export default function BingoPage() {
   const { guestName } = useAuth()
   const { bingoChallenges } = weddingConfig
@@ -84,7 +96,9 @@ export default function BingoPage() {
         initialQuality: 0.85,
       })
 
-      const fileName = `${guestName}_${activeChallengeId}_${Date.now()}.${compressed.type.split('/')[1] || 'jpg'}`
+      const safeGuest = sanitizeFileToken(guestName ?? 'anonimo')
+      const extension = compressed.type.split('/')[1] || 'jpg'
+      const fileName = `${safeGuest}_${activeChallengeId}_${Date.now()}.${extension}`
 
       const { error: uploadError } = await supabase.storage
         .from('bingo')

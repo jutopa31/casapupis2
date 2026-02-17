@@ -10,7 +10,6 @@ import {
   CheckCircle,
   MessageSquare,
   BookHeart,
-  Images,
   MapPin,
   Grid3X3,
   ListMusic,
@@ -42,7 +41,6 @@ const primaryLinks: NavLink[] = [
 
 const secondaryLinks: NavLink[] = [
   { label: 'Nuestra Historia', href: '/nuestra-historia', icon: BookHeart },
-  { label: 'Galeria', href: '/galeria', icon: Images },
   { label: 'Como Llegar', href: '/como-llegar', icon: MapPin },
   { label: 'Bingo Fotografico', href: '/bingo', icon: Grid3X3 },
   { label: 'Playlist', href: '/playlist', icon: ListMusic },

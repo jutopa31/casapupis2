@@ -14,7 +14,6 @@ import {
   ArrowRight,
   Lock,
   BookHeart,
-  Images,
   HeartHandshake,
 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
@@ -41,7 +40,7 @@ interface QuickAccessCard {
 // Constants
 // ---------------------------------------------------------------------------
 
-const WEDDING_DATE = new Date('2026-02-21T20:00:00-03:00')
+const WEDDING_DATE = new Date('2026-02-21T16:00:00-03:00')
 
 const quickAccessCards: QuickAccessCard[] = [
   {
@@ -49,12 +48,6 @@ const quickAccessCards: QuickAccessCard[] = [
     description: 'Conoce como empezo todo',
     href: '/nuestra-historia',
     icon: <BookHeart className="h-6 w-6" />,
-  },
-  {
-    label: 'Galeria',
-    description: 'Las mejores fotos juntos',
-    href: '/galeria',
-    icon: <Images className="h-6 w-6" />,
   },
   {
     label: 'Fotos de Invitados',
@@ -368,7 +361,7 @@ export default function Home() {
       {/* ================================================================= */}
       {/* Hero Section                                                      */}
       {/* ================================================================= */}
-      <section className="relative flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-offwhite via-offwhite to-champagne/40 px-4">
+      <section className="relative flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-offwhite via-offwhite to-champagne/40 px-4 pb-20">
         <div className="flex flex-col items-center gap-6 text-center">
           {/* "Nos casamos" */}
           <motion.p
@@ -416,16 +409,24 @@ export default function Home() {
             21 de febrero de 2026
           </motion.p>
 
-          {/* Location */}
-          <motion.p
+          {/* Event Details */}
+          <motion.div
             custom={4}
             variants={fadeSlideUp}
             initial="hidden"
             animate="visible"
-            className="text-sm tracking-wide text-text-secondary"
+            className="flex flex-col items-center gap-2"
           >
-            El Pato, Berazategui
-          </motion.p>
+            <p className="font-serif text-base tracking-wide text-text-primary/70 sm:text-lg">
+              16 hs
+            </p>
+            <p className="text-sm tracking-wide text-text-secondary">
+              Calle 617, n° 5176 — El Pato, Berazategui
+            </p>
+            <p className="mt-1 text-xs font-medium uppercase tracking-[0.2em] text-gold/70">
+              Dress code: elegante sport
+            </p>
+          </motion.div>
 
           {/* ============================================================= */}
           {/* Countdown Timer                                                */}

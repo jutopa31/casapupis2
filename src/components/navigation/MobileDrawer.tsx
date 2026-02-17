@@ -7,7 +7,6 @@ import {
   X,
   Home,
   BookHeart,
-  Images,
   Camera,
   CheckCircle,
   MapPin,
@@ -43,7 +42,6 @@ interface DrawerLink {
 const drawerLinks: DrawerLink[] = [
   { label: 'Inicio', href: '/', icon: Home },
   { label: 'Nuestra Historia', href: '/nuestra-historia', icon: BookHeart },
-  { label: 'Galeria', href: '/galeria', icon: Images },
   { label: 'Fotos de Invitados', href: '/fotos-invitados', icon: Camera },
   // { label: 'Confirmar Asistencia', href: '/confirmar', icon: CheckCircle },
   { label: 'Como Llegar', href: '/como-llegar', icon: MapPin },
