@@ -9,6 +9,18 @@ import { weddingConfig } from '@/config/wedding'
 import type { BingoEntry } from '@/types/database'
 import imageCompression from 'browser-image-compression'
 
+function sanitizeFileToken(value: string): string {
+  const normalized = value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+
+  return normalized || 'anonimo'
+}
+
 export default function BingoPage() {
   const { guestName } = useAuth()
   const { bingoChallenges } = weddingConfig
@@ -84,7 +96,9 @@ export default function BingoPage() {
         initialQuality: 0.85,
       })
 
-      const fileName = `${guestName}_${activeChallengeId}_${Date.now()}.${compressed.type.split('/')[1] || 'jpg'}`
+      const safeGuest = sanitizeFileToken(guestName ?? 'anonimo')
+      const extension = compressed.type.split('/')[1] || 'jpg'
+      const fileName = `${safeGuest}_${activeChallengeId}_${Date.now()}.${extension}`
 
       const { error: uploadError } = await supabase.storage
         .from('bingo')
@@ -96,11 +110,30 @@ export default function BingoPage() {
         .from('bingo')
         .getPublicUrl(fileName)
 
-      await supabase.from('bingo_entries').insert({
+      const { error: bingoInsertError } = await supabase.from('bingo_entries').insert({
         nombre_invitado: guestName ?? 'Anonimo',
         challenge_id: activeChallengeId,
         foto_url: urlData.publicUrl,
       })
+      if (bingoInsertError) throw bingoInsertError
+
+      const challenge = bingoChallenges.find((item) => item.id === activeChallengeId)
+      const bingoCaption = `Bingo: ${challenge?.challenge ?? 'Desafio completado'}`
+
+      try {
+        const { error: galleryInsertError } = await supabase.from('fotos_invitados').insert({
+          nombre_invitado: guestName ?? 'Anonimo',
+          foto_url: urlData.publicUrl,
+          caption: bingoCaption,
+          bingo_challenge_id: activeChallengeId,
+        })
+
+        if (galleryInsertError) {
+          console.error('Error duplicando foto de bingo en galeria:', galleryInsertError)
+        }
+      } catch (galleryError) {
+        console.error('Error inesperado al duplicar foto de bingo en galeria:', galleryError)
+      }
 
       await loadCompleted()
     } catch (err) {

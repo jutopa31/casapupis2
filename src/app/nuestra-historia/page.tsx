@@ -82,6 +82,9 @@ export default function NuestraHistoriaPage() {
     Partial<HistoriaMilestone> | null | 'new'
   >(null)
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
+  const [showPinModal, setShowPinModal] = useState(false)
+  const [pinInput, setPinInput] = useState('')
+  const [pinError, setPinError] = useState(false)
 
   // Triple-tap tracking
   const tapCountRef = useRef(0)
@@ -120,16 +123,24 @@ export default function NuestraHistoriaPage() {
 
     if (tapCountRef.current >= 3) {
       tapCountRef.current = 0
-      const pin = prompt('PIN de administrador:')
-      if (pin === ADMIN_PIN) {
-        setIsEditMode(true)
-      }
+      setPinInput('')
+      setPinError(false)
+      setShowPinModal(true)
       return
     }
 
     tapTimerRef.current = setTimeout(() => {
       tapCountRef.current = 0
     }, 600)
+  }
+
+  const handlePinSubmit = () => {
+    if (pinInput === ADMIN_PIN) {
+      setShowPinModal(false)
+      setIsEditMode(true)
+    } else {
+      setPinError(true)
+    }
   }
 
   // -----------------------------------------------------------------------
@@ -361,6 +372,67 @@ export default function NuestraHistoriaPage() {
           <Plus className="h-6 w-6" />
         </motion.button>
       )}
+
+      {/* PIN modal */}
+      <AnimatePresence>
+        {showPinModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+            onClick={() => setShowPinModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="w-full max-w-xs rounded-2xl bg-white p-6 text-center shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Pencil className="mx-auto h-8 w-8 text-amber-500" />
+              <h3 className="mt-3 font-serif text-lg text-stone-800">
+                Modo edicion
+              </h3>
+              <p className="mt-1 text-sm text-stone-500">
+                Ingresa el PIN de administrador
+              </p>
+              <input
+                type="password"
+                inputMode="numeric"
+                value={pinInput}
+                onChange={(e) => { setPinInput(e.target.value); setPinError(false) }}
+                onKeyDown={(e) => e.key === 'Enter' && handlePinSubmit()}
+                placeholder="PIN"
+                autoFocus
+                className={`mt-4 w-full rounded-xl border px-4 py-3 text-center text-lg tracking-widest focus:outline-none focus:ring-2 ${
+                  pinError
+                    ? 'border-red-300 focus:border-red-400 focus:ring-red-200'
+                    : 'border-stone-200 focus:border-amber-400 focus:ring-amber-200'
+                }`}
+              />
+              {pinError && (
+                <p className="mt-2 text-xs text-red-500">PIN incorrecto</p>
+              )}
+              <div className="mt-4 flex gap-3">
+                <button
+                  onClick={() => setShowPinModal(false)}
+                  className="flex-1 rounded-xl bg-stone-100 px-4 py-2.5 text-sm font-medium text-stone-600 transition-colors hover:bg-stone-200"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handlePinSubmit}
+                  className="flex-1 rounded-xl px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:brightness-110"
+                  style={{ backgroundColor: '#C9A84C' }}
+                >
+                  Entrar
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Delete confirmation */}
       <AnimatePresence>

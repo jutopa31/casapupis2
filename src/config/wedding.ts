@@ -16,6 +16,7 @@ export interface CoupleInfo {
 
 export interface LocationDetails {
   venue: string;
+  address?: string;
   neighborhood: string;
   city: string;
   province: string;
@@ -84,6 +85,7 @@ export const weddingConfig: WeddingConfig = {
     weddingDate: "2026-02-21",
     location: {
       venue: "Quinta de Vero y Pablo",
+      address: "Calle 617, n° 5176",
       neighborhood: "El Pato",
       city: "Berazategui",
       province: "Buenos Aires",
@@ -102,17 +104,17 @@ export const weddingConfig: WeddingConfig = {
   bankDetails: {
     alias: "casapupis",
     cbu: "",
-    holderName: "Julian & Jacqueline",
+    holderName: "Julian Martin Alonso / Jacqueline Messmer",
   },
 
   // -------------------------------------------------------------------------
   // Textos
   // -------------------------------------------------------------------------
   thankYouText:
-    "Queremos agradecer especialmente a Vero y Pablo, quienes generosamente nos prestan su hermosa quinta para celebrar este dia tan especial. Su carino y apoyo hacen posible este festejo. Gracias de corazon!",
+    "Queremos agradecer a nuestra familia y amigos quienes nos acompañaron para hacer posible este evento, pero sobretodo a Vero y Pablo que nos prestaron su quinta. Su carino y apoyo hacen posible este festejo. Gracias de corazon!",
 
   collaborationText:
-    "Si queres colaborar con los gastos del evento o hacernos un regalo, podes hacerlo a traves de transferencia bancaria. No es obligacion, tu presencia es el mejor regalo!",
+    "Te pedimos tener cuidado con las instalaciones y si llegas a notar que algo se rompio, avisanos! Ademas, si queres colaborar con nosotros, con los gastos de limpieza o reparacion, te dejamos nuestros datos. No es una obligacion, tu presencia es el mejor regalo.",
 
   // -------------------------------------------------------------------------
   // Nuestra Historia - Hitos
@@ -189,42 +191,42 @@ export const weddingConfig: WeddingConfig = {
   // -------------------------------------------------------------------------
   timeline: [
     {
-      time: "20:00",
+      time: "16:00",
       title: "Recepcion",
       description:
         "Llegada de los invitados. Los esperamos con una bienvenida especial.",
       icon: "DoorOpen",
     },
     {
-      time: "21:00",
+      time: "17:00",
       title: "Ceremonia",
       description:
         "El momento mas emotivo: nos damos el si rodeados de nuestros seres queridos.",
       icon: "Heart",
     },
     {
-      time: "21:30",
+      time: "17:30",
       title: "Brindis",
       description:
         "Levantamos las copas para celebrar este nuevo comienzo juntos.",
       icon: "Wine",
     },
     {
-      time: "22:00",
+      time: "18:00",
       title: "Cena",
       description:
         "A disfrutar de una noche deliciosa compartiendo la mesa con familia y amigos.",
       icon: "UtensilsCrossed",
     },
     {
-      time: "23:00",
+      time: "19:00",
       title: "Primer baile",
       description:
         "Nuestro primer baile como esposos. Un momento para recordar siempre.",
       icon: "Music",
     },
     {
-      time: "23:30",
+      time: "19:30",
       title: "Fiesta",
       description:
         "A bailar toda la noche! La pista es de todos. Que no pare la musica!",
@@ -238,7 +240,6 @@ export const weddingConfig: WeddingConfig = {
   navigation: [
     { label: "Inicio", href: "/", icon: "Home" },
     { label: "Nuestra Historia", href: "/nuestra-historia", icon: "BookHeart" },
-    { label: "Galeria", href: "/galeria", icon: "Images" },
     { label: "Fotos", href: "/fotos-invitados", icon: "Camera" },
     { label: "Confirmar", href: "/confirmar", icon: "CheckCircle" },
     { label: "Como Llegar", href: "/como-llegar", icon: "MapPin" },

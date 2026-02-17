@@ -60,7 +60,8 @@ export default function UploadSection({ onUploadComplete }: UploadSectionProps) 
     const { count } = await supabase
       .from('fotos_invitados')
       .select('*', { count: 'exact', head: true })
-      .eq('nombre_invitado', guestName);
+      .eq('nombre_invitado', guestName)
+      .is('bingo_challenge_id', null);
     setUploadedCount(count ?? 0);
   }, [guestName]);
 

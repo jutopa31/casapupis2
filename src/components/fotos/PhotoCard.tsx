@@ -91,10 +91,19 @@ export default function PhotoCard({ foto, onClick, canDelete, onDelete }: PhotoC
     }
   };
 
+  const handleCardKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onClick();
+    }
+  };
+
   return (
-    <motion.button
-      type="button"
+    <motion.div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
+      onKeyDown={handleCardKeyDown}
       className="group relative w-full overflow-hidden rounded-xl bg-stone-100 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#C9A84C]/50"
       style={{ aspectRatio: '3 / 4' }}
       initial={{ opacity: 0, scale: 0.92 }}
@@ -109,6 +118,13 @@ export default function PhotoCard({ foto, onClick, canDelete, onDelete }: PhotoC
         loading="lazy"
         className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
       />
+
+      {/* Bingo badge */}
+      {foto.bingo_challenge_id !== null && (
+        <span className="absolute left-2 top-2 z-10 rounded-full bg-[#C9A84C]/95 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-white shadow-sm">
+          Bingo
+        </span>
+      )}
 
       {/* Delete button */}
       {canDelete && !showConfirm && (
@@ -175,6 +191,6 @@ export default function PhotoCard({ foto, onClick, canDelete, onDelete }: PhotoC
           {formatTimestamp(foto.created_at)}
         </p>
       </div>
-    </motion.button>
+    </motion.div>
   );
 }

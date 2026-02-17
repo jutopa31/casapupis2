@@ -45,6 +45,7 @@ export interface FotoInvitado {
   nombre_invitado: string
   foto_url: string
   caption: string | null
+  bingo_challenge_id: number | null
   created_at: string
 }
 

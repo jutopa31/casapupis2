@@ -1,14 +1,16 @@
 'use client'
 
+import { useState } from 'react'
 import Image from 'next/image'
-import { motion } from 'framer-motion'
-import { MapPin, Navigation, Car, Route } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { MapPin, Navigation, Car, Route, AlertTriangle, X } from 'lucide-react'
 import { weddingConfig } from '@/config/wedding'
 
 const { location } = weddingConfig.couple
 
 export default function ComoLlegarPage() {
   const embedUrl = process.env.NEXT_PUBLIC_GOOGLE_MAPS_EMBED_URL
+  const [showRouteImage, setShowRouteImage] = useState(false)
 
   return (
     <div className="min-h-screen bg-offwhite pb-24 md:pb-8">
@@ -44,6 +46,11 @@ export default function ComoLlegarPage() {
             </div>
             <div>
               <h2 className="font-serif text-xl text-text-primary">{location.venue}</h2>
+              {location.address && (
+                <p className="mt-0.5 text-sm font-medium text-text-primary">
+                  {location.address}
+                </p>
+              )}
               <p className="mt-1 text-sm text-text-secondary">
                 {location.neighborhood}, {location.city}, {location.province}
               </p>
@@ -96,15 +103,27 @@ export default function ComoLlegarPage() {
             </div>
           </div>
 
-          <div className="mt-4 overflow-hidden rounded-xl border border-gold/10">
+          {/* Attention banner */}
+          <div className="mt-4 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3">
+            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+            <p className="text-sm text-amber-800">
+              <span className="font-semibold">Atencion:</span> una vez dentro de El Pato, aca se muestra el camino con la ruta asfaltada
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowRouteImage(true)}
+            className="mt-4 w-full overflow-hidden rounded-xl border border-gold/10 transition-opacity hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-gold/40"
+          >
             <Image
               src="/ruta-sugerida.jpeg"
               alt="Mapa con la ruta sugerida desde la YPF de Mitre hasta la quinta"
               width={600}
               height={450}
-              className="w-full object-cover"
+              className="w-full cursor-pointer object-cover"
             />
-          </div>
+          </button>
 
           <a
             href="https://maps.app.goo.gl/kVYA1fji6S7H4jm56"
@@ -148,6 +167,49 @@ export default function ComoLlegarPage() {
           )}
         </motion.div>
       </div>
+
+      {/* Route image lightbox */}
+      <AnimatePresence>
+        {showRouteImage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+            onClick={() => setShowRouteImage(false)}
+            onKeyDown={(e) => { if (e.key === 'Escape') setShowRouteImage(false) }}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Ruta sugerida ampliada"
+          >
+            <button
+              type="button"
+              onClick={() => setShowRouteImage(false)}
+              className="absolute right-4 top-4 z-10 rounded-full bg-black/50 p-2 text-white transition-colors hover:bg-black/70"
+              aria-label="Cerrar"
+            >
+              <X className="h-6 w-6" />
+            </button>
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative mx-4 max-h-[90vh] max-w-[90vw]"
+            >
+              <Image
+                src="/ruta-sugerida.jpeg"
+                alt="Mapa con la ruta sugerida desde la YPF de Mitre hasta la quinta"
+                width={1200}
+                height={900}
+                className="max-h-[90vh] w-auto rounded-lg object-contain"
+                priority
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
