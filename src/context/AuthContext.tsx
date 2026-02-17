@@ -1,7 +1,6 @@
 'use client'
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
-import { getSupabase } from '@/lib/supabase'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -14,7 +13,7 @@ interface AuthState {
 }
 
 interface AuthContextValue extends AuthState {
-  login: (name: string) => Promise<{ success: boolean; error?: string }>
+  login: (password: string, name: string) => Promise<{ success: boolean; error?: string }>
   logout: () => void
 }
 
@@ -52,44 +51,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  const login = useCallback(async (name: string): Promise<{ success: boolean; error?: string }> => {
-    const trimmed = name.trim()
-    if (!trimmed) {
+  const login = useCallback(async (password: string, name: string): Promise<{ success: boolean; error?: string }> => {
+    const trimmedName = name.trim()
+    if (!trimmedName) {
       return { success: false, error: 'Por favor ingresa tu nombre.' }
     }
 
-    const supabase = getSupabase()
-    if (!supabase) {
-      // Modo preview sin Supabase: dejar entrar con nombre libre
-      const newState: AuthState = {
-        isAuthenticated: true,
-        guestId: null,
-        guestName: trimmed,
-      }
-      setAuth(newState)
-      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(newState)) } catch { /* */ }
-      return { success: true }
-    }
-
-    // Buscar invitado por nombre (case-insensitive)
-    const { data, error } = await supabase
-      .from('invitados')
-      .select('id, nombre')
-      .ilike('nombre', trimmed)
-      .limit(1)
-      .single()
-
-    if (error || !data) {
-      return {
-        success: false,
-        error: 'No encontramos tu nombre en la lista de invitados. Verifica que esté escrito exactamente como en la invitación.',
-      }
+    if (password.trim().toLowerCase() !== 'casapupis') {
+      return { success: false, error: 'Código de acceso incorrecto.' }
     }
 
     const newState: AuthState = {
       isAuthenticated: true,
-      guestId: data.id,
-      guestName: data.nombre, // usar el nombre tal cual está en la DB
+      guestId: null,
+      guestName: trimmedName,
     }
     setAuth(newState)
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(newState)) } catch { /* */ }

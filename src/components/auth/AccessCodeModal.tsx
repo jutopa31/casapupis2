@@ -7,6 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 export default function AccessCodeModal() {
   const { isAuthenticated, login } = useAuth();
 
+  const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -17,13 +18,17 @@ export default function AccessCodeModal() {
     e.preventDefault();
     setError('');
 
+    if (!password.trim()) {
+      setError('Por favor, ingresa el código de acceso.');
+      return;
+    }
     if (!name.trim()) {
       setError('Por favor, ingresa tu nombre.');
       return;
     }
 
     setIsSubmitting(true);
-    const result = await login(name.trim());
+    const result = await login(password.trim(), name.trim());
     setIsSubmitting(false);
 
     if (!result.success && result.error) {
@@ -50,8 +55,22 @@ export default function AccessCodeModal() {
             Bienvenido
           </h1>
           <p className="text-gray-500 text-sm mb-8">
-            Ingresa tu nombre tal como aparece en la invitacion
+            Ingresa el código de acceso y tu nombre
           </p>
+
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              setError('');
+            }}
+            placeholder="Código de acceso"
+            autoFocus
+            className="w-full px-4 py-3 rounded-xl border border-gray-300 text-center text-lg
+              focus:outline-none focus:ring-2 focus:ring-[#C9A84C] focus:border-transparent
+              transition-shadow placeholder:text-gray-400"
+          />
 
           <input
             type="text"
@@ -60,9 +79,8 @@ export default function AccessCodeModal() {
               setName(e.target.value);
               setError('');
             }}
-            placeholder="Tu nombre completo"
-            autoFocus
-            className="w-full px-4 py-3 rounded-xl border border-gray-300 text-center text-lg
+            placeholder="Tu nombre"
+            className="w-full mt-4 px-4 py-3 rounded-xl border border-gray-300 text-center text-lg
               focus:outline-none focus:ring-2 focus:ring-[#C9A84C] focus:border-transparent
               transition-shadow placeholder:text-gray-400"
           />
@@ -79,13 +97,13 @@ export default function AccessCodeModal() {
 
           <button
             type="submit"
-            disabled={isSubmitting || !name.trim()}
+            disabled={isSubmitting || !password.trim() || !name.trim()}
             className="mt-6 w-full py-3 rounded-xl text-white font-medium text-lg
               transition-all duration-200 hover:brightness-110 hover:shadow-lg
               disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ backgroundColor: '#C9A84C' }}
           >
-            {isSubmitting ? 'Buscando...' : 'Ingresar'}
+            {isSubmitting ? 'Entrando...' : 'Ingresar'}
           </button>
         </form>
       </motion.div>

@@ -188,6 +188,7 @@ function AccessCodeModal({
   onSuccess: () => void
 }) {
   const { login } = useAuth()
+  const [password, setPassword] = useState('')
   const [name, setName] = useState('')
   const [error, setError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -197,13 +198,17 @@ function AccessCodeModal({
     e.preventDefault()
     setError('')
 
+    if (!password.trim()) {
+      setError('Por favor ingresa el código de acceso')
+      return
+    }
     if (!name.trim()) {
       setError('Por favor ingresa tu nombre')
       return
     }
 
     setIsSubmitting(true)
-    const result = await login(name.trim())
+    const result = await login(password.trim(), name.trim())
     setIsSubmitting(false)
 
     if (result.success) {
@@ -247,13 +252,20 @@ function AccessCodeModal({
           Bienvenido/a
         </h3>
         <p className="mb-6 text-center text-sm text-text-secondary">
-          Ingresa tu nombre tal como aparece en la invitacion
+          Ingresa el código de acceso y tu nombre
         </p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <input
+            type="password"
+            placeholder="Código de acceso"
+            value={password}
+            onChange={(e) => { setPassword(e.target.value); setError('') }}
+            className="rounded-lg border border-gold/20 bg-white px-4 py-3 text-sm text-text-primary outline-none transition-colors placeholder:text-text-secondary/50 focus:border-gold/50"
+          />
+          <input
             type="text"
-            placeholder="Tu nombre completo"
+            placeholder="Tu nombre"
             value={name}
             onChange={(e) => { setName(e.target.value); setError('') }}
             className="rounded-lg border border-gold/20 bg-white px-4 py-3 text-sm text-text-primary outline-none transition-colors placeholder:text-text-secondary/50 focus:border-gold/50"
@@ -265,10 +277,10 @@ function AccessCodeModal({
 
           <button
             type="submit"
-            disabled={isSubmitting || !name.trim()}
+            disabled={isSubmitting || !password.trim() || !name.trim()}
             className="rounded-lg bg-gold px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-gold/90 disabled:opacity-50"
           >
-            {isSubmitting ? 'Buscando...' : 'Ingresar'}
+            {isSubmitting ? 'Entrando...' : 'Ingresar'}
           </button>
 
           <button
