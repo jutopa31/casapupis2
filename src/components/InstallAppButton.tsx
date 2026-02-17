@@ -47,9 +47,9 @@ export default function InstallAppButton({
         <button
           type="button"
           onClick={handleClick}
-          className="group flex flex-col items-center gap-3 rounded-xl border border-dashed border-gold/30 bg-gold/5 p-5 text-center backdrop-blur-sm transition-all duration-300 hover:border-gold/40 hover:bg-gold/10 hover:shadow-lg hover:shadow-gold/5 sm:p-6"
+          className="group flex w-full flex-col items-center gap-3 rounded-xl border border-gold/15 bg-white/70 p-5 text-center backdrop-blur-sm transition-all duration-300 hover:border-gold/40 hover:bg-white hover:shadow-lg hover:shadow-gold/5 sm:p-6"
         >
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gold/15 text-gold transition-colors duration-300 group-hover:bg-gold group-hover:text-white">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gold/10 text-gold transition-colors duration-300 group-hover:bg-gold group-hover:text-white">
             <Download className="h-6 w-6" />
           </div>
           <div>
