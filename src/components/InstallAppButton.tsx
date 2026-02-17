@@ -1,25 +1,24 @@
 'use client';
 
 import { useState } from 'react';
-import { Download, Share, X } from 'lucide-react';
+import { Download, Share, X, MoreVertical } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useInstallPrompt } from '@/hooks/useInstallPrompt';
 
 export default function InstallAppButton() {
   const { canInstall, isInstalled, isIOS, promptInstall } = useInstallPrompt();
-  const [showIOSGuide, setShowIOSGuide] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
 
-  // Already installed — hide button
+  // Already running as standalone PWA — hide button
   if (isInstalled) return null;
-
-  // Not installable and not iOS — browser doesn't support it
-  if (!canInstall && !isIOS) return null;
 
   async function handleClick() {
     if (canInstall) {
+      // Android / Chrome — trigger native prompt
       await promptInstall();
-    } else if (isIOS) {
-      setShowIOSGuide(true);
+    } else {
+      // iOS or any other browser — show manual instructions
+      setShowGuide(true);
     }
   }
 
@@ -34,15 +33,15 @@ export default function InstallAppButton() {
         <span className="text-sm font-medium">Instalar App</span>
       </button>
 
-      {/* iOS instructions modal */}
+      {/* Installation instructions modal */}
       <AnimatePresence>
-        {showIOSGuide && (
+        {showGuide && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[100] flex items-end justify-center bg-black/40 backdrop-blur-sm"
-            onClick={() => setShowIOSGuide(false)}
+            onClick={() => setShowGuide(false)}
           >
             <motion.div
               initial={{ y: '100%' }}
@@ -54,11 +53,11 @@ export default function InstallAppButton() {
             >
               <div className="mb-4 flex items-center justify-between">
                 <h3 className="font-serif text-lg text-[#C9A84C]">
-                  Instalar en iPhone
+                  {isIOS ? 'Instalar en iPhone' : 'Instalar App'}
                 </h3>
                 <button
                   type="button"
-                  onClick={() => setShowIOSGuide(false)}
+                  onClick={() => setShowGuide(false)}
                   className="p-1 text-stone-400 hover:text-stone-600"
                   aria-label="Cerrar"
                 >
@@ -66,35 +65,84 @@ export default function InstallAppButton() {
                 </button>
               </div>
 
-              <ol className="space-y-4 text-sm text-stone-600">
-                <li className="flex items-start gap-3">
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#C9A84C]/10 text-xs font-semibold text-[#C9A84C]">
-                    1
-                  </span>
-                  <span>
-                    Toca el boton{' '}
-                    <Share size={16} className="inline text-[#007AFF]" />{' '}
-                    <strong>Compartir</strong> en la barra de Safari
-                  </span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#C9A84C]/10 text-xs font-semibold text-[#C9A84C]">
-                    2
-                  </span>
-                  <span>
-                    Desplaza y selecciona{' '}
-                    <strong>&quot;Agregar a Inicio&quot;</strong>
-                  </span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#C9A84C]/10 text-xs font-semibold text-[#C9A84C]">
-                    3
-                  </span>
-                  <span>
-                    Toca <strong>&quot;Agregar&quot;</strong> y listo!
-                  </span>
-                </li>
-              </ol>
+              {isIOS ? (
+                /* ---- iOS / Safari instructions ---- */
+                <ol className="space-y-4 text-sm text-stone-600">
+                  <li className="flex items-start gap-3">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#C9A84C]/10 text-xs font-semibold text-[#C9A84C]">
+                      1
+                    </span>
+                    <span>
+                      Abri esta pagina en <strong>Safari</strong> (si estas en
+                      otro navegador)
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#C9A84C]/10 text-xs font-semibold text-[#C9A84C]">
+                      2
+                    </span>
+                    <span>
+                      Toca el boton{' '}
+                      <Share size={16} className="inline text-[#007AFF]" />{' '}
+                      <strong>Compartir</strong> en la barra inferior
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#C9A84C]/10 text-xs font-semibold text-[#C9A84C]">
+                      3
+                    </span>
+                    <span>
+                      Selecciona{' '}
+                      <strong>&quot;Agregar a Inicio&quot;</strong>
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#C9A84C]/10 text-xs font-semibold text-[#C9A84C]">
+                      4
+                    </span>
+                    <span>
+                      Toca <strong>&quot;Agregar&quot;</strong> y listo!
+                    </span>
+                  </li>
+                </ol>
+              ) : (
+                /* ---- Android / Chrome / other browser instructions ---- */
+                <ol className="space-y-4 text-sm text-stone-600">
+                  <li className="flex items-start gap-3">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#C9A84C]/10 text-xs font-semibold text-[#C9A84C]">
+                      1
+                    </span>
+                    <span>
+                      Abri esta pagina en <strong>Chrome</strong>
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#C9A84C]/10 text-xs font-semibold text-[#C9A84C]">
+                      2
+                    </span>
+                    <span>
+                      Toca el menu{' '}
+                      <MoreVertical
+                        size={16}
+                        className="inline text-stone-500"
+                      />{' '}
+                      (tres puntos arriba a la derecha)
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#C9A84C]/10 text-xs font-semibold text-[#C9A84C]">
+                      3
+                    </span>
+                    <span>
+                      Selecciona{' '}
+                      <strong>
+                        &quot;Agregar a pantalla de inicio&quot;
+                      </strong>{' '}
+                      o <strong>&quot;Instalar app&quot;</strong>
+                    </span>
+                  </li>
+                </ol>
+              )}
 
               <p className="mt-5 text-center text-xs text-stone-400">
                 La app aparecera en tu pantalla de inicio
