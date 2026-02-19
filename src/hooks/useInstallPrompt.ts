@@ -7,6 +7,9 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
+type IOSWindow = Window & { MSStream?: unknown };
+type IOSNavigator = Navigator & { standalone?: boolean };
+
 export function useInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] =
     useState<BeforeInstallPromptEvent | null>(null);
@@ -16,13 +19,14 @@ export function useInstallPrompt() {
   useEffect(() => {
     // Detect iOS
     const ua = navigator.userAgent;
-    const ios = /iPad|iPhone|iPod/.test(ua) && !(window as any).MSStream;
+    const ios = /iPad|iPhone|iPod/.test(ua) && !(window as IOSWindow).MSStream;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsIOS(ios);
 
     // Check if already running as standalone (installed)
     if (
       window.matchMedia('(display-mode: standalone)').matches ||
-      (navigator as any).standalone === true
+      (navigator as IOSNavigator).standalone === true
     ) {
       setIsInstalled(true);
       return;

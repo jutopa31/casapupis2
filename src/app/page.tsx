@@ -142,6 +142,7 @@ function useCountdown(targetDate: Date): TimeLeft | null {
     }
 
     // Set initial value immediately on client
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setTimeLeft(calculate())
 
     const interval = setInterval(() => {
