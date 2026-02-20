@@ -15,6 +15,7 @@ import {
   ListMusic,
   Clock,
   HeartHandshake,
+  BarChart2,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import InstallAppButton from '@/components/InstallAppButton';
@@ -51,6 +52,7 @@ const drawerLinks: DrawerLink[] = [
   { label: 'Playlist', href: '/playlist', icon: ListMusic },
   // { label: 'Programa', href: '/programa', icon: Clock },
   { label: 'Agradecimiento', href: '/agradecimiento', icon: HeartHandshake },
+  { label: 'Encuestas', href: '/encuestas', icon: BarChart2 },
 ];
 
 // ---------------------------------------------------------------------------

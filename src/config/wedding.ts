@@ -60,6 +60,12 @@ export interface NavigationItem {
   icon: string;
 }
 
+export interface EncuestaPregunta {
+  id: number;
+  pregunta: string;
+  opciones: string[];
+}
+
 export interface WeddingConfig {
   couple: CoupleInfo;
   bankDetails: BankDetails;
@@ -69,6 +75,7 @@ export interface WeddingConfig {
   bingoChallenges: BingoChallenge[];
   timeline: TimelineEvent[];
   navigation: NavigationItem[];
+  encuestas: EncuestaPregunta[];
 }
 
 // ---------------------------------------------------------------------------
@@ -248,5 +255,47 @@ export const weddingConfig: WeddingConfig = {
     { label: "Playlist", href: "/playlist", icon: "ListMusic" },
     { label: "Programa", href: "/programa", icon: "Clock" },
     { label: "Agradecimiento", href: "/agradecimiento", icon: "HeartHandshake" },
+    { label: "Encuestas", href: "/encuestas", icon: "BarChart2" },
+  ],
+
+  // -------------------------------------------------------------------------
+  // Encuestas - Preguntas divertidas para los invitados
+  // -------------------------------------------------------------------------
+  encuestas: [
+    {
+      id: 1,
+      pregunta: "¿Quién tiene mejor ritmo en la pista?",
+      opciones: ["Julian", "Jacqueline", "Los dos igual", "El DJ"],
+    },
+    {
+      id: 2,
+      pregunta: "¿Cuánto dura este matrimonio?",
+      opciones: [
+        "Para siempre",
+        "50+ años",
+        "Hasta que la muerte los separe",
+        "¿Qué pregunta es esa?",
+      ],
+    },
+    {
+      id: 3,
+      pregunta: "¿Cuál fue tu momento favorito del día?",
+      opciones: ["La ceremonia", "El brindis", "La cena", "La fiesta"],
+    },
+    {
+      id: 4,
+      pregunta: "¿Quién dijo 'sí' primero mentalmente?",
+      opciones: [
+        "Julian",
+        "Jacqueline",
+        "Los dos al mismo tiempo",
+        "Preguntale a ellos",
+      ],
+    },
+    {
+      id: 5,
+      pregunta: "¿Cómo llegaste a la fiesta?",
+      opciones: ["En auto", "En remis/taxi", "Me trajeron", "En OVNI"],
+    },
   ],
 };
