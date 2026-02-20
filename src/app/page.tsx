@@ -15,6 +15,7 @@ import {
   Lock,
   BookHeart,
   HeartHandshake,
+  BarChart2,
 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import InstallAppButton from '@/components/InstallAppButton'
@@ -91,6 +92,12 @@ const quickAccessCards: QuickAccessCard[] = [
     description: 'Un mensaje especial para vos',
     href: '/agradecimiento',
     icon: <HeartHandshake className="h-6 w-6" />,
+  },
+  {
+    label: 'Encuestas',
+    description: 'Responde preguntas divertidas sobre la boda',
+    href: '/encuestas',
+    icon: <BarChart2 className="h-6 w-6" />,
   },
 ]
 

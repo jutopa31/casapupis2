@@ -82,3 +82,11 @@ export interface HistoriaMilestone {
   created_at: string
   updated_at: string
 }
+
+export interface EncuestaRespuesta {
+  id: string
+  nombre_invitado: string
+  pregunta_id: number
+  respuesta: string
+  created_at: string
+}
