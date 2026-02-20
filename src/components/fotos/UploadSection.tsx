@@ -13,6 +13,9 @@ import { useAuth } from '@/context/AuthContext';
 
 interface UploadSectionProps {
   onUploadComplete: () => void;
+  tableName?: string;
+  bucketName?: string;
+  photoLimit?: number;
 }
 
 interface SelectedFile {
@@ -38,7 +41,12 @@ interface Toast {
 
 const PHOTO_LIMIT_PER_GUEST = 50;
 
-export default function UploadSection({ onUploadComplete }: UploadSectionProps) {
+export default function UploadSection({
+  onUploadComplete,
+  tableName = 'fotos_invitados',
+  bucketName = 'fotos-invitados',
+  photoLimit = PHOTO_LIMIT_PER_GUEST,
+}: UploadSectionProps) {
   const { guestName } = useAuth();
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
@@ -58,7 +66,7 @@ export default function UploadSection({ onUploadComplete }: UploadSectionProps) 
     const supabase = getSupabase();
     if (!supabase || !guestName) return;
     const { count } = await supabase
-      .from('fotos_invitados')
+      .from(tableName)
       .select('*', { count: 'exact', head: true })
       .eq('nombre_invitado', guestName)
       .is('bingo_challenge_id', null);
@@ -69,7 +77,7 @@ export default function UploadSection({ onUploadComplete }: UploadSectionProps) 
     loadUploadedCount();
   }, [loadUploadedCount]);
 
-  const remaining = uploadedCount !== null ? PHOTO_LIMIT_PER_GUEST - uploadedCount : PHOTO_LIMIT_PER_GUEST;
+  const remaining = uploadedCount !== null ? photoLimit - uploadedCount : photoLimit;
 
   // -----------------------------------------------------------------------
   // Toast helper
@@ -91,14 +99,14 @@ export default function UploadSection({ onUploadComplete }: UploadSectionProps) 
     // Enforce photo limit per guest
     const availableSlots = remaining - selectedFiles.length;
     if (availableSlots <= 0) {
-      showToast('error', `Ya alcanzaste el limite de ${PHOTO_LIMIT_PER_GUEST} fotos`);
+      showToast('error', `Ya alcanzaste el limite de ${photoLimit} fotos`);
       e.target.value = '';
       return;
     }
 
     const filesToAdd = Array.from(files).slice(0, availableSlots);
     if (filesToAdd.length < files.length) {
-      showToast('error', `Solo podes agregar ${availableSlots} foto${availableSlots > 1 ? 's' : ''} mas (limite: ${PHOTO_LIMIT_PER_GUEST})`);
+      showToast('error', `Solo podes agregar ${availableSlots} foto${availableSlots > 1 ? 's' : ''} mas (limite: ${photoLimit})`);
     }
 
     const newSelected: SelectedFile[] = filesToAdd.map((file) => ({
@@ -176,7 +184,7 @@ export default function UploadSection({ onUploadComplete }: UploadSectionProps) 
         const filePath = `${timestamp}_${random}.jpg`;
 
         const { error: storageError } = await supabase.storage
-          .from('fotos-invitados')
+          .from(bucketName)
           .upload(filePath, compressed, {
             contentType: 'image/jpeg',
             upsert: false,
@@ -189,13 +197,13 @@ export default function UploadSection({ onUploadComplete }: UploadSectionProps) 
 
         // --- Step 3: Get public URL ---
         const { data: publicUrlData } = supabase.storage
-          .from('fotos-invitados')
+          .from(bucketName)
           .getPublicUrl(filePath);
 
         const publicUrl = publicUrlData.publicUrl;
 
         // --- Step 4: Insert DB row ---
-        const { error: dbError } = await supabase.from('fotos_invitados').insert({
+        const { error: dbError } = await supabase.from(tableName).insert({
           nombre_invitado: guestName,
           foto_url: publicUrl,
           caption: caption.trim() || null,
@@ -268,8 +276,8 @@ export default function UploadSection({ onUploadComplete }: UploadSectionProps) 
         <div className="mb-3 text-center">
           <span className={`text-xs font-medium ${remaining <= 5 ? 'text-amber-600' : 'text-stone-400'}`}>
             {remaining > 0
-              ? `${remaining} foto${remaining !== 1 ? 's' : ''} disponible${remaining !== 1 ? 's' : ''} de ${PHOTO_LIMIT_PER_GUEST}`
-              : `Alcanzaste el limite de ${PHOTO_LIMIT_PER_GUEST} fotos`}
+              ? `${remaining} foto${remaining !== 1 ? 's' : ''} disponible${remaining !== 1 ? 's' : ''} de ${photoLimit}`
+              : `Alcanzaste el limite de ${photoLimit} fotos`}
           </span>
         </div>
       )}
