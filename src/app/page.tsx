@@ -16,6 +16,7 @@ import {
   BookHeart,
   HeartHandshake,
   HelpCircle,
+  Heart,
 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import InstallAppButton from '@/components/InstallAppButton'
@@ -56,6 +57,12 @@ const quickAccessCards: QuickAccessCard[] = [
     description: 'Comparti tus mejores fotos de la fiesta',
     href: '/fotos-invitados',
     icon: <Camera className="h-6 w-6" />,
+  },
+  {
+    label: 'Fotos del Civil',
+    description: 'Fotos de la ceremonia del 18/2',
+    href: '/fotos-civil',
+    icon: <Heart className="h-6 w-6" />,
   },
   // {
   //   label: 'Confirmar Asistencia',

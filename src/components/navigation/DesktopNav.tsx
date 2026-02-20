@@ -16,6 +16,7 @@ import {
   Clock,
   HeartHandshake,
   HelpCircle,
+  Heart,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import InstallAppButton from '@/components/InstallAppButton';
@@ -37,6 +38,7 @@ interface NavLink {
 const primaryLinks: NavLink[] = [
   { label: 'Inicio', href: '/', icon: Home },
   { label: 'Fotos', href: '/fotos-invitados', icon: Camera },
+  { label: 'El Civil', href: '/fotos-civil', icon: Heart },
   // { label: 'Confirmar', href: '/confirmar', icon: CheckCircle },
   { label: 'Muro', href: '/muro', icon: MessageSquare },
 ];

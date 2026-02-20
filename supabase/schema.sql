@@ -137,6 +137,36 @@ CREATE POLICY "Public insert access on fotos_invitados"
 
 
 -- =============================================
+-- Table: fotos_civil
+-- Photos uploaded by guests and the couple from
+-- the civil ceremony on February 18, 2026.
+-- Mirrors the fotos_invitados structure.
+-- =============================================
+CREATE TABLE IF NOT EXISTS fotos_civil (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  nombre_invitado TEXT NOT NULL,
+  foto_url TEXT NOT NULL,
+  caption TEXT,
+  bingo_challenge_id INTEGER DEFAULT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+ALTER TABLE fotos_civil ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Public read access on fotos_civil"
+  ON fotos_civil FOR SELECT
+  USING (true);
+
+CREATE POLICY "Public insert access on fotos_civil"
+  ON fotos_civil FOR INSERT
+  WITH CHECK (true);
+
+CREATE POLICY "Public delete access on fotos_civil"
+  ON fotos_civil FOR DELETE
+  USING (true);
+
+
+-- =============================================
 -- Storage Buckets
 -- These must be created via the Supabase Dashboard
 -- (Storage > New Bucket) since SQL cannot create
@@ -161,3 +191,9 @@ CREATE POLICY "Public insert access on fotos_invitados"
 -- Access: Public read and write (guests upload challenge photos)
 --
 -- CREATE STORAGE BUCKET bingo (public: true);
+
+-- Bucket: fotos-civil
+-- Purpose: Civil ceremony (Feb 18) guest-uploaded photos
+-- Access: Public read and write (guests upload freely)
+--
+-- CREATE STORAGE BUCKET fotos-civil (public: true);
