@@ -90,3 +90,12 @@ export interface EncuestaRespuesta {
   respuesta: string
   created_at: string
 }
+
+export interface EncuestaPreguntaDB {
+  id: number
+  pregunta: string
+  opciones: string[]
+  permitir_otra: boolean
+  activa: boolean
+  created_at: string
+}
