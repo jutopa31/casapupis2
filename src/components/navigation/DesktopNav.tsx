@@ -15,7 +15,7 @@ import {
   ListMusic,
   Clock,
   HeartHandshake,
-  BarChart2,
+  HelpCircle,
   Heart,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -50,7 +50,7 @@ const secondaryLinks: NavLink[] = [
   { label: 'Playlist', href: '/playlist', icon: ListMusic },
   // { label: 'Programa', href: '/programa', icon: Clock },
   { label: 'Agradecimiento', href: '/agradecimiento', icon: HeartHandshake },
-  { label: 'Encuestas', href: '/encuestas', icon: BarChart2 },
+  { label: 'Trivia', href: '/encuestas', icon: HelpCircle },
 ];
 
 // ---------------------------------------------------------------------------

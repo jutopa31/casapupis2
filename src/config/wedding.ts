@@ -248,6 +248,6 @@ export const weddingConfig: WeddingConfig = {
     { label: "Playlist", href: "/playlist", icon: "ListMusic" },
     { label: "Programa", href: "/programa", icon: "Clock" },
     { label: "Agradecimiento", href: "/agradecimiento", icon: "HeartHandshake" },
-    { label: "Encuestas", href: "/encuestas", icon: "BarChart2" },
+    { label: "Trivia", href: "/encuestas", icon: "HelpCircle" },
   ],
 };
