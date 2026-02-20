@@ -15,6 +15,8 @@ interface PhotoCardProps {
   onClick: () => void;
   canDelete?: boolean;
   onDelete?: (fotoId: string) => void;
+  tableName?: string;
+  bucketName?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -36,8 +38,8 @@ function formatTimestamp(dateStr: string): string {
 }
 
 /** Extract the storage file path from a full Supabase public URL */
-function extractStoragePath(url: string): string | null {
-  const marker = '/object/public/fotos-invitados/';
+function extractStoragePath(url: string, bucketName: string): string | null {
+  const marker = `/object/public/${bucketName}/`;
   const idx = url.indexOf(marker);
   if (idx === -1) return null;
   return url.substring(idx + marker.length);
@@ -47,7 +49,14 @@ function extractStoragePath(url: string): string | null {
 // Component
 // ---------------------------------------------------------------------------
 
-export default function PhotoCard({ foto, onClick, canDelete, onDelete }: PhotoCardProps) {
+export default function PhotoCard({
+  foto,
+  onClick,
+  canDelete,
+  onDelete,
+  tableName = 'fotos_invitados',
+  bucketName = 'fotos-invitados',
+}: PhotoCardProps) {
   const [showConfirm, setShowConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -69,14 +78,14 @@ export default function PhotoCard({ foto, onClick, canDelete, onDelete }: PhotoC
     setIsDeleting(true);
     try {
       // Delete from storage
-      const filePath = extractStoragePath(foto.foto_url);
+      const filePath = extractStoragePath(foto.foto_url, bucketName);
       if (filePath) {
-        await supabase.storage.from('fotos-invitados').remove([filePath]);
+        await supabase.storage.from(bucketName).remove([filePath]);
       }
 
       // Delete from database
       const { error } = await supabase
-        .from('fotos_invitados')
+        .from(tableName)
         .delete()
         .eq('id', foto.id);
 

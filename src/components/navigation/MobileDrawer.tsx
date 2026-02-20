@@ -16,6 +16,7 @@ import {
   Clock,
   HeartHandshake,
   BarChart2,
+  Heart,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import InstallAppButton from '@/components/InstallAppButton';
@@ -45,6 +46,7 @@ const drawerLinks: DrawerLink[] = [
   { label: 'Inicio', href: '/', icon: Home },
   { label: 'Nuestra Historia', href: '/nuestra-historia', icon: BookHeart },
   { label: 'Fotos de Invitados', href: '/fotos-invitados', icon: Camera },
+  { label: 'Fotos del Civil', href: '/fotos-civil', icon: Heart },
   // { label: 'Confirmar Asistencia', href: '/confirmar', icon: CheckCircle },
   { label: 'Como Llegar', href: '/como-llegar', icon: MapPin },
   { label: 'Muro de Mensajes', href: '/muro', icon: MessageSquare },
