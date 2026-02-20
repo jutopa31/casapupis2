@@ -83,19 +83,20 @@ export interface HistoriaMilestone {
   updated_at: string
 }
 
-export interface EncuestaRespuesta {
-  id: string
-  nombre_invitado: string
-  pregunta_id: number
-  respuesta: string
-  created_at: string
-}
-
-export interface EncuestaPreguntaDB {
+export interface TriviaPregunta {
   id: number
   pregunta: string
   opciones: string[]
-  permitir_otra: boolean
+  respuesta_correcta: string
   activa: boolean
+  created_at: string
+}
+
+export interface TriviaResultado {
+  id: string
+  nombre_invitado: string
+  puntaje: number
+  total_preguntas: number
+  respuestas: Record<string, string>
   created_at: string
 }
