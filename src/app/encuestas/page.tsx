@@ -1,19 +1,26 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { motion } from 'framer-motion'
-import { BarChart2, Send, CheckCircle2 } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import {
+  BarChart2,
+  Send,
+  CheckCircle2,
+  Plus,
+  Pencil,
+  Trash2,
+  X,
+  Save,
+} from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { getSupabase } from '@/lib/supabase'
-import { weddingConfig } from '@/config/wedding'
-import type { EncuestaRespuesta } from '@/types/database'
+import type { EncuestaRespuesta, EncuestaPreguntaDB } from '@/types/database'
 import Toast from '@/components/ui/Toast'
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
-const PREGUNTAS = weddingConfig.encuestas
 const ADMIN_NAMES = ['Julian', 'Jacqueline']
 
 // ---------------------------------------------------------------------------
@@ -100,21 +107,23 @@ function BarraResultado({
 // ---------------------------------------------------------------------------
 
 function TarjetaResultado({
-  preguntaId,
   pregunta,
-  opciones,
   resultados,
   miRespuesta,
   index,
 }: {
-  preguntaId: number
-  pregunta: string
-  opciones: string[]
+  pregunta: EncuestaPreguntaDB
   resultados: Resultados
   miRespuesta: string | undefined
   index: number
 }) {
-  const conteos = resultados[preguntaId] ?? {}
+  const conteos = resultados[pregunta.id] ?? {}
+  // Combine config options + any custom responses from DB
+  const opcionesConocidas = new Set(pregunta.opciones)
+  const opcionesExtra = Object.keys(conteos).filter(
+    (k) => !opcionesConocidas.has(k),
+  )
+  const todasOpciones = [...pregunta.opciones, ...opcionesExtra]
   const total = totalVotos(conteos)
 
   return (
@@ -125,10 +134,10 @@ function TarjetaResultado({
       className="rounded-2xl border border-gold/15 bg-white p-5 shadow-sm"
     >
       <p className="mb-4 font-serif text-base font-semibold text-text-primary">
-        {pregunta}
+        {pregunta.pregunta}
       </p>
       <div className="space-y-3">
-        {opciones.map((opcion, i) => (
+        {todasOpciones.map((opcion, i) => (
           <BarraResultado
             key={opcion}
             opcion={opcion}
@@ -147,6 +156,147 @@ function TarjetaResultado({
 }
 
 // ---------------------------------------------------------------------------
+// Admin: Question form (create / edit)
+// ---------------------------------------------------------------------------
+
+function FormularioPregunta({
+  initial,
+  onSave,
+  onCancel,
+  saving,
+}: {
+  initial?: EncuestaPreguntaDB
+  onSave: (data: {
+    pregunta: string
+    opciones: string[]
+    permitir_otra: boolean
+  }) => void
+  onCancel: () => void
+  saving: boolean
+}) {
+  const [pregunta, setPregunta] = useState(initial?.pregunta ?? '')
+  const [opciones, setOpciones] = useState<string[]>(
+    initial?.opciones.length ? [...initial.opciones] : ['', ''],
+  )
+  const [permitirOtra, setPermitirOtra] = useState(
+    initial?.permitir_otra ?? false,
+  )
+
+  function updateOpcion(index: number, value: string) {
+    setOpciones((prev) => prev.map((o, i) => (i === index ? value : o)))
+  }
+
+  function removeOpcion(index: number) {
+    if (opciones.length <= 2) return
+    setOpciones((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  function addOpcion() {
+    setOpciones((prev) => [...prev, ''])
+  }
+
+  const canSave =
+    pregunta.trim() &&
+    opciones.filter((o) => o.trim()).length >= 2 &&
+    !saving
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, height: 0 }}
+      animate={{ opacity: 1, height: 'auto' }}
+      exit={{ opacity: 0, height: 0 }}
+      className="overflow-hidden rounded-2xl border border-gold/30 bg-white p-5 shadow-sm"
+    >
+      <div className="space-y-4">
+        <div>
+          <label className="mb-1 block text-xs font-medium text-text-secondary">
+            Pregunta
+          </label>
+          <input
+            type="text"
+            value={pregunta}
+            onChange={(e) => setPregunta(e.target.value)}
+            placeholder="Escribí tu pregunta..."
+            className="w-full rounded-xl border border-gold/20 bg-white px-4 py-3 text-sm outline-none focus:border-gold/50"
+          />
+        </div>
+
+        <div>
+          <label className="mb-1 block text-xs font-medium text-text-secondary">
+            Opciones (mínimo 2)
+          </label>
+          <div className="space-y-2">
+            {opciones.map((opcion, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={opcion}
+                  onChange={(e) => updateOpcion(i, e.target.value)}
+                  placeholder={`Opción ${i + 1}`}
+                  className="flex-1 rounded-lg border border-gold/20 bg-white px-3 py-2 text-sm outline-none focus:border-gold/50"
+                />
+                {opciones.length > 2 && (
+                  <button
+                    type="button"
+                    onClick={() => removeOpcion(i)}
+                    className="rounded-lg p-1.5 text-stone-400 transition-colors hover:bg-red-50 hover:text-red-500"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={addOpcion}
+            className="mt-2 flex items-center gap-1 text-xs font-medium text-gold transition-colors hover:text-gold/70"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Agregar opción
+          </button>
+        </div>
+
+        <label className="flex items-center gap-2 text-sm text-text-primary">
+          <input
+            type="checkbox"
+            checked={permitirOtra}
+            onChange={(e) => setPermitirOtra(e.target.checked)}
+            className="h-4 w-4 rounded border-gold/30 accent-gold"
+          />
+          Permitir respuesta personalizada (&quot;Otra...&quot;)
+        </label>
+
+        <div className="flex items-center gap-2 pt-1">
+          <button
+            type="button"
+            onClick={() =>
+              onSave({
+                pregunta: pregunta.trim(),
+                opciones: opciones.filter((o) => o.trim()),
+                permitir_otra: permitirOtra,
+              })
+            }
+            disabled={!canSave}
+            className="flex items-center gap-2 rounded-lg bg-gold px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-gold/90 disabled:opacity-50"
+          >
+            <Save className="h-4 w-4" />
+            {saving ? 'Guardando...' : 'Guardar'}
+          </button>
+          <button
+            type="button"
+            onClick={onCancel}
+            className="rounded-lg px-4 py-2 text-sm text-text-secondary transition-colors hover:bg-stone-50"
+          >
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </motion.div>
+  )
+}
+
+// ---------------------------------------------------------------------------
 // Main Page
 // ---------------------------------------------------------------------------
 
@@ -156,40 +306,69 @@ export default function EncuestasPage() {
     (n) => guestName?.toLowerCase() === n.toLowerCase(),
   )
 
-  const [isLoading, setIsLoading] = useState(true)
-  const [yaRespondio, setYaRespondio] = useState(false)
-  const [misRespuestas, setMisRespuestas] = useState<Respuestas>({})
-  const [seleccion, setSeleccion] = useState<Respuestas>({})
+  // Data
+  const [preguntas, setPreguntas] = useState<EncuestaPreguntaDB[]>([])
   const [todasLasRespuestas, setTodasLasRespuestas] = useState<
     EncuestaRespuesta[]
   >([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  // Guest form state
+  const [yaRespondio, setYaRespondio] = useState(false)
+  const [misRespuestas, setMisRespuestas] = useState<Respuestas>({})
+  const [seleccion, setSeleccion] = useState<Respuestas>({})
+  const [otraAbierta, setOtraAbierta] = useState<Record<number, boolean>>({})
+  const [otraTexto, setOtraTexto] = useState<Record<number, string>>({})
   const [submitting, setSubmitting] = useState(false)
+
+  // Admin state
+  const [creando, setCreando] = useState(false)
+  const [editandoId, setEditandoId] = useState<number | null>(null)
+  const [eliminandoId, setEliminandoId] = useState<number | null>(null)
+  const [adminSaving, setAdminSaving] = useState(false)
+
+  // Toast
   const [toast, setToast] = useState<{
     message: string
     type: 'success' | 'error'
     visible: boolean
   }>({ message: '', type: 'success', visible: false })
 
+  const preguntasActivas = preguntas.filter((p) => p.activa)
   const mostrarResultados = yaRespondio || isAdmin
 
-  const cargarRespuestas = useCallback(async () => {
+  // -------------------------------------------------------------------------
+  // Load data
+  // -------------------------------------------------------------------------
+
+  const cargarDatos = useCallback(async () => {
     const supabase = getSupabase()
     if (!supabase) {
       setIsLoading(false)
       return
     }
 
-    const { data } = await supabase
-      .from('encuesta_respuestas')
-      .select('*')
-      .order('created_at', { ascending: true })
+    const [preguntasRes, respuestasRes] = await Promise.all([
+      supabase
+        .from('encuesta_preguntas')
+        .select('*')
+        .order('id', { ascending: true }),
+      supabase
+        .from('encuesta_respuestas')
+        .select('*')
+        .order('created_at', { ascending: true }),
+    ])
 
-    const todas = (data ?? []) as EncuestaRespuesta[]
-    setTodasLasRespuestas(todas)
+    const preg = (preguntasRes.data ?? []) as EncuestaPreguntaDB[]
+    const resp = (respuestasRes.data ?? []) as EncuestaRespuesta[]
 
-    // Check if current guest has already answered
-    const propias = todas.filter(
-      (r) => r.nombre_invitado.toLowerCase() === (guestName ?? '').toLowerCase(),
+    setPreguntas(preg)
+    setTodasLasRespuestas(resp)
+
+    // Check if current guest already answered
+    const propias = resp.filter(
+      (r) =>
+        r.nombre_invitado.toLowerCase() === (guestName ?? '').toLowerCase(),
     )
     if (propias.length > 0) {
       setYaRespondio(true)
@@ -204,11 +383,15 @@ export default function EncuestasPage() {
   }, [guestName])
 
   useEffect(() => {
-    cargarRespuestas()
-  }, [cargarRespuestas])
+    cargarDatos()
+  }, [cargarDatos])
+
+  // -------------------------------------------------------------------------
+  // Guest: submit answers
+  // -------------------------------------------------------------------------
 
   async function handleEnviar() {
-    if (Object.keys(seleccion).length < PREGUNTAS.length) return
+    if (Object.keys(seleccion).length < preguntasActivas.length) return
 
     setSubmitting(true)
     const supabase = getSupabase()
@@ -223,7 +406,7 @@ export default function EncuestasPage() {
       return
     }
 
-    const rows = PREGUNTAS.map((p) => ({
+    const rows = preguntasActivas.map((p) => ({
       nombre_invitado: guestName ?? 'Anonimo',
       pregunta_id: p.id,
       respuesta: seleccion[p.id],
@@ -240,7 +423,7 @@ export default function EncuestasPage() {
     } else {
       setMisRespuestas(seleccion)
       setYaRespondio(true)
-      await cargarRespuestas()
+      await cargarDatos()
       setToast({
         message: '¡Gracias por responder!',
         type: 'success',
@@ -251,8 +434,170 @@ export default function EncuestasPage() {
     setSubmitting(false)
   }
 
+  // -------------------------------------------------------------------------
+  // Guest: select option (including "Otra")
+  // -------------------------------------------------------------------------
+
+  function seleccionarOpcion(preguntaId: number, opcion: string) {
+    setSeleccion((prev) => ({ ...prev, [preguntaId]: opcion }))
+    setOtraAbierta((prev) => ({ ...prev, [preguntaId]: false }))
+    setOtraTexto((prev) => ({ ...prev, [preguntaId]: '' }))
+  }
+
+  function toggleOtra(preguntaId: number) {
+    const abierta = !otraAbierta[preguntaId]
+    setOtraAbierta((prev) => ({ ...prev, [preguntaId]: abierta }))
+    if (!abierta) {
+      // If closing, clear custom text and revert selection if it was custom
+      const textoActual = otraTexto[preguntaId]
+      if (seleccion[preguntaId] === textoActual) {
+        setSeleccion((prev) => {
+          const next = { ...prev }
+          delete next[preguntaId]
+          return next
+        })
+      }
+    }
+  }
+
+  function confirmarOtra(preguntaId: number) {
+    const texto = (otraTexto[preguntaId] ?? '').trim()
+    if (texto) {
+      setSeleccion((prev) => ({ ...prev, [preguntaId]: texto }))
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // Admin: create question
+  // -------------------------------------------------------------------------
+
+  async function handleCrear(data: {
+    pregunta: string
+    opciones: string[]
+    permitir_otra: boolean
+  }) {
+    setAdminSaving(true)
+    const supabase = getSupabase()
+    if (!supabase) {
+      setToast({
+        message: 'No se pudo conectar.',
+        type: 'error',
+        visible: true,
+      })
+      setAdminSaving(false)
+      return
+    }
+
+    const { error } = await supabase.from('encuesta_preguntas').insert({
+      pregunta: data.pregunta,
+      opciones: data.opciones,
+      permitir_otra: data.permitir_otra,
+    })
+
+    if (error) {
+      setToast({ message: 'Error al crear.', type: 'error', visible: true })
+    } else {
+      setCreando(false)
+      await cargarDatos()
+      setToast({
+        message: 'Encuesta creada!',
+        type: 'success',
+        visible: true,
+      })
+    }
+    setAdminSaving(false)
+  }
+
+  // -------------------------------------------------------------------------
+  // Admin: edit question
+  // -------------------------------------------------------------------------
+
+  async function handleEditar(data: {
+    pregunta: string
+    opciones: string[]
+    permitir_otra: boolean
+  }) {
+    if (editandoId === null) return
+    setAdminSaving(true)
+    const supabase = getSupabase()
+    if (!supabase) {
+      setToast({
+        message: 'No se pudo conectar.',
+        type: 'error',
+        visible: true,
+      })
+      setAdminSaving(false)
+      return
+    }
+
+    const { error } = await supabase
+      .from('encuesta_preguntas')
+      .update({
+        pregunta: data.pregunta,
+        opciones: data.opciones,
+        permitir_otra: data.permitir_otra,
+      })
+      .eq('id', editandoId)
+
+    if (error) {
+      setToast({
+        message: 'Error al actualizar.',
+        type: 'error',
+        visible: true,
+      })
+    } else {
+      setEditandoId(null)
+      await cargarDatos()
+      setToast({
+        message: 'Encuesta actualizada!',
+        type: 'success',
+        visible: true,
+      })
+    }
+    setAdminSaving(false)
+  }
+
+  // -------------------------------------------------------------------------
+  // Admin: delete question
+  // -------------------------------------------------------------------------
+
+  async function handleEliminar(id: number) {
+    setAdminSaving(true)
+    const supabase = getSupabase()
+    if (!supabase) {
+      setAdminSaving(false)
+      return
+    }
+
+    const { error } = await supabase
+      .from('encuesta_preguntas')
+      .delete()
+      .eq('id', id)
+
+    if (error) {
+      setToast({
+        message: 'Error al eliminar.',
+        type: 'error',
+        visible: true,
+      })
+    } else {
+      setEliminandoId(null)
+      await cargarDatos()
+      setToast({
+        message: 'Encuesta eliminada.',
+        type: 'success',
+        visible: true,
+      })
+    }
+    setAdminSaving(false)
+  }
+
+  // -------------------------------------------------------------------------
+  // Render
+  // -------------------------------------------------------------------------
+
   const resultados = calcularResultados(todasLasRespuestas)
-  const todasSeleccionadas = PREGUNTAS.every((p) => seleccion[p.id])
+  const todasSeleccionadas = preguntasActivas.every((p) => seleccion[p.id])
 
   return (
     <div className="min-h-screen bg-offwhite pb-24 md:pb-8">
@@ -288,7 +633,120 @@ export default function EncuestasPage() {
       </header>
 
       <section className="mx-auto mt-6 max-w-lg space-y-4 px-4">
-        {/* Loading skeleton */}
+        {/* ============================================================= */}
+        {/* Admin panel                                                    */}
+        {/* ============================================================= */}
+        {isAdmin && !isLoading && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="space-y-3"
+          >
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-text-primary">
+                Administrar encuestas
+              </h2>
+              {!creando && editandoId === null && (
+                <button
+                  type="button"
+                  onClick={() => setCreando(true)}
+                  className="flex items-center gap-1 rounded-lg bg-gold/10 px-3 py-1.5 text-xs font-medium text-gold transition-colors hover:bg-gold/20"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Nueva encuesta
+                </button>
+              )}
+            </div>
+
+            {/* Create form */}
+            <AnimatePresence>
+              {creando && (
+                <FormularioPregunta
+                  onSave={handleCrear}
+                  onCancel={() => setCreando(false)}
+                  saving={adminSaving}
+                />
+              )}
+            </AnimatePresence>
+
+            {/* Existing questions list for admin */}
+            {preguntas.map((p) => (
+              <div key={p.id}>
+                {editandoId === p.id ? (
+                  <FormularioPregunta
+                    initial={p}
+                    onSave={handleEditar}
+                    onCancel={() => setEditandoId(null)}
+                    saving={adminSaving}
+                  />
+                ) : (
+                  <div className="flex items-start justify-between gap-3 rounded-xl border border-gold/10 bg-white px-4 py-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-text-primary">
+                        {p.pregunta}
+                      </p>
+                      <p className="mt-0.5 text-xs text-text-secondary">
+                        {p.opciones.join(' · ')}
+                        {p.permitir_otra && ' · Otra...'}
+                        {!p.activa && (
+                          <span className="ml-2 text-orange-500">
+                            (inactiva)
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditandoId(p.id)
+                          setCreando(false)
+                        }}
+                        className="rounded-lg p-1.5 text-stone-400 transition-colors hover:bg-stone-50 hover:text-gold"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      {eliminandoId === p.id ? (
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => handleEliminar(p.id)}
+                            disabled={adminSaving}
+                            className="rounded-lg px-2 py-1 text-xs font-medium text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50"
+                          >
+                            Confirmar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setEliminandoId(null)}
+                            className="rounded-lg p-1.5 text-stone-400 transition-colors hover:bg-stone-50"
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setEliminandoId(p.id)}
+                          className="rounded-lg p-1.5 text-stone-400 transition-colors hover:bg-red-50 hover:text-red-500"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+
+            {/* Divider */}
+            <div className="border-t border-gold/10 pt-2" />
+          </motion.div>
+        )}
+
+        {/* ============================================================= */}
+        {/* Loading skeleton                                               */}
+        {/* ============================================================= */}
         {isLoading && (
           <>
             {Array.from({ length: 3 }).map((_, i) => (
@@ -313,8 +771,33 @@ export default function EncuestasPage() {
           </>
         )}
 
-        {/* Results view */}
-        {!isLoading && mostrarResultados && (
+        {/* ============================================================= */}
+        {/* Empty state                                                    */}
+        {/* ============================================================= */}
+        {!isLoading && preguntasActivas.length === 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex flex-col items-center py-16 text-center"
+          >
+            <div className="rounded-full bg-stone-100 p-5">
+              <BarChart2 className="h-10 w-10 text-stone-400" />
+            </div>
+            <p className="mt-4 text-base font-medium text-stone-600">
+              No hay encuestas todavía
+            </p>
+            <p className="mt-1 text-sm text-stone-400">
+              {isAdmin
+                ? 'Creá la primera encuesta desde el panel de arriba'
+                : 'Pronto habrá encuestas para responder'}
+            </p>
+          </motion.div>
+        )}
+
+        {/* ============================================================= */}
+        {/* Results view                                                   */}
+        {/* ============================================================= */}
+        {!isLoading && mostrarResultados && preguntasActivas.length > 0 && (
           <>
             {yaRespondio && !isAdmin && (
               <motion.div
@@ -326,12 +809,10 @@ export default function EncuestasPage() {
                 Ya enviaste tus respuestas. Acá están los resultados!
               </motion.div>
             )}
-            {PREGUNTAS.map((p, i) => (
+            {preguntasActivas.map((p, i) => (
               <TarjetaResultado
                 key={p.id}
-                preguntaId={p.id}
-                pregunta={p.pregunta}
-                opciones={p.opciones}
+                pregunta={p}
                 resultados={resultados}
                 miRespuesta={misRespuestas[p.id]}
                 index={i}
@@ -340,48 +821,104 @@ export default function EncuestasPage() {
           </>
         )}
 
-        {/* Form view */}
-        {!isLoading && !mostrarResultados && (
+        {/* ============================================================= */}
+        {/* Form view (guest hasn't answered yet)                          */}
+        {/* ============================================================= */}
+        {!isLoading && !mostrarResultados && preguntasActivas.length > 0 && (
           <>
-            {PREGUNTAS.map((p, i) => (
-              <motion.div
-                key={p.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.08 }}
-                className="rounded-2xl border border-gold/15 bg-white p-5 shadow-sm"
-              >
-                <p className="mb-4 font-serif text-base font-semibold text-text-primary">
-                  {p.pregunta}
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {p.opciones.map((opcion) => {
-                    const seleccionada = seleccion[p.id] === opcion
-                    return (
+            {preguntasActivas.map((p, i) => {
+              const esOtraAbierta = otraAbierta[p.id] ?? false
+              const otraConfirmada =
+                seleccion[p.id] &&
+                !p.opciones.includes(seleccion[p.id])
+
+              return (
+                <motion.div
+                  key={p.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.08 }}
+                  className="rounded-2xl border border-gold/15 bg-white p-5 shadow-sm"
+                >
+                  <p className="mb-4 font-serif text-base font-semibold text-text-primary">
+                    {p.pregunta}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {p.opciones.map((opcion) => {
+                      const seleccionada = seleccion[p.id] === opcion
+                      return (
+                        <button
+                          key={opcion}
+                          type="button"
+                          onClick={() => seleccionarOpcion(p.id, opcion)}
+                          className={`rounded-full border px-4 py-2 text-sm transition-all duration-200 ${
+                            seleccionada
+                              ? 'border-gold bg-gold text-white shadow-sm'
+                              : 'border-gold/20 bg-white text-text-secondary hover:border-gold/50 hover:text-text-primary'
+                          }`}
+                        >
+                          {opcion}
+                        </button>
+                      )
+                    })}
+
+                    {/* "Otra..." toggle */}
+                    {p.permitir_otra && (
                       <button
-                        key={opcion}
                         type="button"
-                        onClick={() =>
-                          setSeleccion((prev) => ({ ...prev, [p.id]: opcion }))
-                        }
+                        onClick={() => toggleOtra(p.id)}
                         className={`rounded-full border px-4 py-2 text-sm transition-all duration-200 ${
-                          seleccionada
+                          esOtraAbierta || otraConfirmada
                             ? 'border-gold bg-gold text-white shadow-sm'
-                            : 'border-gold/20 bg-white text-text-secondary hover:border-gold/50 hover:text-text-primary'
+                            : 'border-dashed border-gold/30 bg-white text-text-secondary hover:border-gold/50 hover:text-text-primary'
                         }`}
                       >
-                        {opcion}
+                        {otraConfirmada ? seleccion[p.id] : 'Otra...'}
                       </button>
-                    )
-                  })}
-                </div>
-              </motion.div>
-            ))}
+                    )}
+                  </div>
+
+                  {/* Custom answer input */}
+                  {p.permitir_otra && esOtraAbierta && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      className="mt-3 flex items-center gap-2"
+                    >
+                      <input
+                        type="text"
+                        value={otraTexto[p.id] ?? ''}
+                        onChange={(e) =>
+                          setOtraTexto((prev) => ({
+                            ...prev,
+                            [p.id]: e.target.value,
+                          }))
+                        }
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') confirmarOtra(p.id)
+                        }}
+                        placeholder="Tu respuesta..."
+                        className="flex-1 rounded-lg border border-gold/20 bg-white px-3 py-2 text-sm outline-none focus:border-gold/50"
+                        autoFocus
+                      />
+                      <button
+                        type="button"
+                        onClick={() => confirmarOtra(p.id)}
+                        disabled={!(otraTexto[p.id] ?? '').trim()}
+                        className="rounded-lg bg-gold px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-gold/90 disabled:opacity-50"
+                      >
+                        OK
+                      </button>
+                    </motion.div>
+                  )}
+                </motion.div>
+              )
+            })}
 
             <motion.button
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: PREGUNTAS.length * 0.08 + 0.1 }}
+              transition={{ delay: preguntasActivas.length * 0.08 + 0.1 }}
               type="button"
               onClick={handleEnviar}
               disabled={submitting || !todasSeleccionadas}
