@@ -14,6 +14,7 @@ import {
   X,
   Save,
   Medal,
+  ChevronDown,
 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { getSupabase } from '@/lib/supabase'
@@ -210,11 +211,25 @@ function FormularioPregunta({
 // Ranking table
 // ---------------------------------------------------------------------------
 
-function Ranking({ resultados }: { resultados: TriviaResultado[] }) {
+function Ranking({ resultados, preguntas }: { resultados: TriviaResultado[], preguntas: TriviaPregunta[] }) {
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+
   const sorted = [...resultados].sort((a, b) => {
     if (b.puntaje !== a.puntaje) return b.puntaje - a.puntaje
     return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
   })
+
+  function getWrongAnswers(resultado: TriviaResultado) {
+    return Object.entries(resultado.respuestas)
+      .filter(([qId, ans]) => {
+        const p = preguntas.find((q) => q.id === Number(qId))
+        return p && ans !== p.respuesta_correcta
+      })
+      .map(([qId, ans]) => {
+        const p = preguntas.find((q) => q.id === Number(qId))!
+        return { text: p.pregunta, answered: ans, correct: p.respuesta_correcta }
+      })
+  }
 
   if (sorted.length === 0) {
     return (
@@ -236,35 +251,80 @@ function Ranking({ resultados }: { resultados: TriviaResultado[] }) {
         Ranking
       </h3>
       <div className="space-y-1.5">
-        {sorted.map((r, i) => (
-          <motion.div
-            key={r.id}
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: i * 0.05 }}
-            className={`flex items-center gap-3 rounded-xl px-4 py-3 ${
-              i < 3
-                ? 'border border-gold/20 bg-white shadow-sm'
-                : 'bg-white/50'
-            }`}
-          >
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center">
-              {i < 3 ? (
-                <Medal className={`h-6 w-6 ${getMedalColor(i)}`} />
-              ) : (
-                <span className="text-sm font-medium text-stone-400">
-                  {i + 1}
+        {sorted.map((r, i) => {
+          const wrongAnswers = getWrongAnswers(r)
+          const hasWrong = wrongAnswers.length > 0
+          const isExpanded = expandedId === r.id
+
+          return (
+            <motion.div
+              key={r.id}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: i * 0.05 }}
+              className={`rounded-xl ${
+                i < 3
+                  ? 'border border-gold/20 bg-white shadow-sm'
+                  : 'bg-white/50'
+              }`}
+            >
+              <button
+                type="button"
+                onClick={() => hasWrong && setExpandedId(isExpanded ? null : r.id)}
+                className={`flex w-full items-center gap-3 px-4 py-3 text-left ${hasWrong ? 'cursor-pointer' : 'cursor-default'}`}
+              >
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center">
+                  {i < 3 ? (
+                    <Medal className={`h-6 w-6 ${getMedalColor(i)}`} />
+                  ) : (
+                    <span className="text-sm font-medium text-stone-400">
+                      {i + 1}
+                    </span>
+                  )}
                 </span>
-              )}
-            </span>
-            <span className="flex-1 truncate text-sm font-medium text-text-primary">
-              {r.nombre_invitado}
-            </span>
-            <span className="shrink-0 text-sm font-semibold text-gold">
-              {r.puntaje}/{r.total_preguntas}
-            </span>
-          </motion.div>
-        ))}
+                <span className="flex-1 truncate text-sm font-medium text-text-primary">
+                  {r.nombre_invitado}
+                </span>
+                <span className="shrink-0 text-sm font-semibold text-gold">
+                  {r.puntaje}/{r.total_preguntas}
+                </span>
+                {hasWrong && (
+                  <ChevronDown
+                    className={`h-4 w-4 shrink-0 text-stone-400 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+                  />
+                )}
+              </button>
+
+              <AnimatePresence>
+                {isExpanded && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="space-y-2 border-t border-stone-100 px-4 py-3">
+                      <p className="text-xs font-medium text-stone-400">
+                        Preguntas incorrectas
+                      </p>
+                      {wrongAnswers.map((w, wi) => (
+                        <div key={wi} className="rounded-lg bg-stone-50 px-3 py-2 text-xs">
+                          <p className="font-medium text-text-primary">{w.text}</p>
+                          <p className="mt-1 text-red-500">
+                            Respondió: <span className="font-medium">{w.answered}</span>
+                          </p>
+                          <p className="text-green-600">
+                            Correcta: <span className="font-medium">{w.correct}</span>
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          )
+        })}
       </div>
     </div>
   )
@@ -347,8 +407,12 @@ export default function TriviaPage() {
         r.nombre_invitado.toLowerCase() === (guestName ?? '').toLowerCase(),
     )
     if (mio) {
-      setYaJugo(true)
       setMiResultado(mio)
+      const activasCount = preg.filter((p) => p.activa).length
+      // Only block replaying if they already answered all current active questions
+      if (mio.total_preguntas >= activasCount) {
+        setYaJugo(true)
+      }
     }
 
     setIsLoading(false)
@@ -400,12 +464,15 @@ export default function TriviaPage() {
     const supabase = getSupabase()
     if (!supabase) return
 
-    await supabase.from('trivia_resultados').insert({
-      nombre_invitado: guestName ?? 'Anonimo',
-      puntaje: pts,
-      total_preguntas: total,
-      respuestas: resp,
-    })
+    await supabase.from('trivia_resultados').upsert(
+      {
+        nombre_invitado: guestName ?? 'Anonimo',
+        puntaje: pts,
+        total_preguntas: total,
+        respuestas: resp,
+      },
+      { onConflict: 'nombre_invitado' },
+    )
 
     await cargarDatos()
   }
@@ -625,7 +692,7 @@ export default function TriviaPage() {
             <div className="border-t border-gold/10 pt-2" />
 
             {/* Admin always sees ranking */}
-            <Ranking resultados={resultados} />
+            <Ranking resultados={resultados} preguntas={preguntas} />
           </motion.div>
         )}
 
@@ -686,7 +753,7 @@ export default function TriviaPage() {
                 {mensajeFinal.mensaje}
               </p>
             </div>
-            <Ranking resultados={resultados} />
+            <Ranking resultados={resultados} preguntas={preguntas} />
           </motion.div>
         )}
 
@@ -712,13 +779,22 @@ export default function TriviaPage() {
               <p className="mt-2 text-sm text-text-secondary">
                 {preguntasActivas.length} preguntas · Elegí la respuesta correcta
               </p>
+              {miResultado && (
+                <div className="mt-4 rounded-xl border border-gold/20 bg-gold/5 px-4 py-3 text-sm text-text-secondary">
+                  Tu resultado anterior:{' '}
+                  <span className="font-semibold text-gold">
+                    {miResultado.puntaje}/{miResultado.total_preguntas}
+                  </span>
+                  {' '}— hay preguntas nuevas, ¡podés volver a jugar!
+                </div>
+              )}
               <button
                 type="button"
                 onClick={() => setPhase('playing')}
                 className="mt-8 flex items-center gap-2 rounded-xl bg-gold px-8 py-3 text-sm font-medium text-white transition-colors hover:bg-gold/90"
               >
                 <Play className="h-4 w-4" />
-                Empezar
+                {miResultado ? 'Jugar de nuevo' : 'Empezar'}
               </button>
             </motion.div>
           )}
@@ -846,7 +922,7 @@ export default function TriviaPage() {
                 {mensajeFinal.mensaje}
               </motion.p>
             </div>
-            <Ranking resultados={resultados} />
+            <Ranking resultados={resultados} preguntas={preguntas} />
           </motion.div>
         )}
       </section>
