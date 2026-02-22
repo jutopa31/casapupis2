@@ -16,6 +16,8 @@ interface UploadSectionProps {
   tableName?: string;
   bucketName?: string;
   photoLimit?: number;
+  /** Archivo recibido desde el Share Target de Android. Si se provee, se sube automáticamente. */
+  sharedFile?: File | null;
 }
 
 interface SelectedFile {
@@ -46,6 +48,7 @@ export default function UploadSection({
   tableName = 'fotos_invitados',
   bucketName = 'fotos-invitados',
   photoLimit = PHOTO_LIMIT_PER_GUEST,
+  sharedFile,
 }: UploadSectionProps) {
   const { guestName } = useAuth();
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -57,6 +60,9 @@ export default function UploadSection({
   const [uploadProgress, setUploadProgress] = useState<UploadProgress[]>([]);
   const [toast, setToast] = useState<Toast | null>(null);
   const [uploadedCount, setUploadedCount] = useState<number | null>(null);
+
+  // Ref usado para disparar auto-upload cuando llega un sharedFile
+  const autoUploadRef = useRef(false);
 
   // -----------------------------------------------------------------------
   // Load uploaded count for this guest
@@ -76,6 +82,26 @@ export default function UploadSection({
   useEffect(() => {
     loadUploadedCount();
   }, [loadUploadedCount]);
+
+  // -----------------------------------------------------------------------
+  // Share Target: auto-populate + auto-upload when sharedFile is provided
+  // -----------------------------------------------------------------------
+
+  // Effect 1: cuando llega el archivo compartido y hay nombre de invitado, lo agrega a la lista
+  useEffect(() => {
+    if (!sharedFile || autoUploadRef.current || !guestName) return;
+    autoUploadRef.current = true;
+    const preview = URL.createObjectURL(sharedFile);
+    setSelectedFiles([{ file: sharedFile, previewUrl: preview }]);
+  }, [sharedFile, guestName]);
+
+  // Effect 2: cuando selectedFiles se actualiza con el archivo compartido, dispara el upload
+  useEffect(() => {
+    if (!autoUploadRef.current || selectedFiles.length === 0 || isUploading) return;
+    autoUploadRef.current = false;
+    void handleUpload(); // eslint-disable-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedFiles.length]);
 
   const remaining = uploadedCount !== null ? photoLimit - uploadedCount : photoLimit;
 
