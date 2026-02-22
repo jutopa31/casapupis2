@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { ImageIcon, Camera } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
+import { popSharedFile } from '@/lib/shareTargetIDB';
 import type { FotoInvitado } from '@/types/database';
 import UploadSection from '@/components/fotos/UploadSection';
 import PhotoCard from '@/components/fotos/PhotoCard';
@@ -49,6 +50,10 @@ export default function FotosInvitadosPage() {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Share Target: archivo recibido desde el menú Compartir de Android
+  const [shareFile, setShareFile] = useState<File | null>(null);
+  const [fromShare, setFromShare] = useState(false);
 
   // Lightbox state
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -132,6 +137,25 @@ export default function FotosInvitadosPage() {
   }, [loadPhotos]);
 
   // -----------------------------------------------------------------------
+  // Share Target: detectar llegada desde el menú Compartir
+  // -----------------------------------------------------------------------
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('fromShare') !== '1') return;
+
+    setFromShare(true);
+    popSharedFile().then((file) => {
+      if (file) setShareFile(file);
+    });
+
+    // Limpiar el param de la URL sin recargar la página
+    const url = new URL(window.location.href);
+    url.searchParams.delete('fromShare');
+    window.history.replaceState(null, '', url.toString());
+  }, []);
+
+  // -----------------------------------------------------------------------
   // Delete handler
   // -----------------------------------------------------------------------
 
@@ -183,9 +207,24 @@ export default function FotosInvitadosPage() {
         </motion.p>
       </header>
 
+      {/* Banner de llegada desde Share Target */}
+      {fromShare && (
+        <div className="mx-auto mt-4 max-w-2xl px-4">
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-center text-sm text-amber-800">
+            Foto recibida desde el menu Compartir — procesando...
+          </div>
+        </div>
+      )}
+
       {/* Upload section */}
       <section className="mx-auto mt-6 max-w-2xl px-4">
-        <UploadSection onUploadComplete={loadPhotos} />
+        <UploadSection
+          onUploadComplete={() => {
+            setFromShare(false);
+            loadPhotos();
+          }}
+          sharedFile={shareFile}
+        />
       </section>
 
       {/* Gallery */}
