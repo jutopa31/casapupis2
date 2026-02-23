@@ -114,7 +114,7 @@ export const weddingConfig: WeddingConfig = {
     "Queremos agradecer a nuestra familia y amigos quienes nos acompañaron para hacer posible este evento, pero sobretodo a Vero y Pablo que nos prestaron su quinta. Su carino y apoyo hacen posible este festejo. Gracias de corazon!",
 
   collaborationText:
-    "Te pedimos tener cuidado con las instalaciones y si llegas a notar que algo se rompio, avisanos! Ademas, si queres colaborar con nosotros, con los gastos de limpieza o reparacion, te dejamos nuestros datos. No es una obligacion, tu presencia es el mejor regalo.",
+    "Te pedimos tener cuidado con las instalaciones y si llegas a notar que algo se rompio, avisanos!",
 
   // -------------------------------------------------------------------------
   // Nuestra Historia - Hitos
