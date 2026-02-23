@@ -16,8 +16,8 @@ interface UploadSectionProps {
   tableName?: string;
   bucketName?: string;
   photoLimit?: number;
-  /** Archivo recibido desde el Share Target de Android. Si se provee, se sube automáticamente. */
-  sharedFile?: File | null;
+  /** Archivos recibidos desde el Share Target de Android. Si se proveen, se suben automáticamente. */
+  sharedFiles?: File[];
 }
 
 interface SelectedFile {
@@ -48,7 +48,7 @@ export default function UploadSection({
   tableName = 'fotos_invitados',
   bucketName = 'fotos-invitados',
   photoLimit = PHOTO_LIMIT_PER_GUEST,
-  sharedFile,
+  sharedFiles,
 }: UploadSectionProps) {
   const { guestName } = useAuth();
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -92,13 +92,16 @@ export default function UploadSection({
   // Share Target: auto-populate + auto-upload when sharedFile is provided
   // -----------------------------------------------------------------------
 
-  // Effect 1: cuando llega el archivo compartido y hay nombre de invitado, lo agrega a la lista
+  // Effect 1: cuando llegan los archivos compartidos y hay nombre de invitado, los agrega todos
   useEffect(() => {
-    if (!sharedFile || autoUploadRef.current || !guestName) return;
+    if (!sharedFiles?.length || autoUploadRef.current || !guestName) return;
     autoUploadRef.current = true;
-    const preview = URL.createObjectURL(sharedFile);
-    setSelectedFiles([{ file: sharedFile, previewUrl: preview }]);
-  }, [sharedFile, guestName]);
+    const newSelected: SelectedFile[] = sharedFiles.map((file) => ({
+      file,
+      previewUrl: URL.createObjectURL(file),
+    }));
+    setSelectedFiles(newSelected);
+  }, [sharedFiles, guestName]);
 
   // Effect 2: cuando selectedFiles se actualiza con el archivo compartido, dispara el upload
   useEffect(() => {

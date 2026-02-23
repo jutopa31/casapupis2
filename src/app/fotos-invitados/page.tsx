@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { ImageIcon, Camera } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
-import { popSharedFile } from '@/lib/shareTargetIDB';
+import { popSharedFiles } from '@/lib/shareTargetIDB';
 import type { FotoInvitado } from '@/types/database';
 import UploadSection from '@/components/fotos/UploadSection';
 import PhotoCard from '@/components/fotos/PhotoCard';
@@ -51,8 +51,8 @@ export default function FotosInvitadosPage() {
   const [hasMore, setHasMore] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Share Target: archivo recibido desde el menú Compartir de Android
-  const [shareFile, setShareFile] = useState<File | null>(null);
+  // Share Target: archivos recibidos desde el menú Compartir de Android
+  const [shareFiles, setShareFiles] = useState<File[]>([]);
   const [fromShare, setFromShare] = useState(false);
 
   // Lightbox state
@@ -145,8 +145,8 @@ export default function FotosInvitadosPage() {
     if (params.get('fromShare') !== '1') return;
 
     setFromShare(true);
-    popSharedFile().then((file) => {
-      if (file) setShareFile(file);
+    popSharedFiles().then((files) => {
+      if (files.length) setShareFiles(files);
     });
 
     // Limpiar el param de la URL sin recargar la página
@@ -211,7 +211,9 @@ export default function FotosInvitadosPage() {
       {fromShare && (
         <div className="mx-auto mt-4 max-w-2xl px-4">
           <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-center text-sm text-amber-800">
-            Foto recibida desde el menu Compartir — procesando...
+            {shareFiles.length > 1
+              ? `${shareFiles.length} fotos recibidas desde el menu Compartir — procesando...`
+              : 'Foto recibida desde el menu Compartir — procesando...'}
           </div>
         </div>
       )}
@@ -223,7 +225,7 @@ export default function FotosInvitadosPage() {
             setFromShare(false);
             loadPhotos();
           }}
-          sharedFile={shareFile}
+          sharedFiles={shareFiles}
         />
       </section>
 

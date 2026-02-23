@@ -1,9 +1,9 @@
 /**
- * Helpers para leer el archivo que el Service Worker guardó en IndexedDB
- * cuando el usuario compartió una foto desde el menú nativo de Android.
+ * Helpers para leer los archivos que el Service Worker guardó en IndexedDB
+ * cuando el usuario compartió fotos desde el menú nativo de Android.
  *
- * La función `popSharedFile` lee el archivo más reciente y limpia el store,
- * de modo que no quede basura si el usuario navega de vuelta.
+ * La función `popSharedFiles` lee todos los registros, limpia el store,
+ * y devuelve un array de File (puede ser vacío si no hay nada).
  */
 
 const IDB_NAME = 'jj-share-target';
@@ -30,10 +30,10 @@ function openDB(): Promise<IDBDatabase> {
 }
 
 /**
- * Lee el archivo guardado por el SW, lo elimina del store y lo devuelve como File.
- * Devuelve null si no hay nada guardado o si ocurre algún error.
+ * Lee todos los archivos guardados por el SW, limpia el store y los devuelve
+ * como array de File. Devuelve [] si no hay nada o si ocurre algún error.
  */
-export async function popSharedFile(): Promise<File | null> {
+export async function popSharedFiles(): Promise<File[]> {
   try {
     const db = await openDB();
     const records = await new Promise<SharedFileRecord[]>((resolve, reject) => {
@@ -47,11 +47,8 @@ export async function popSharedFile(): Promise<File | null> {
       all.onerror = () => reject(all.error);
     });
 
-    if (records.length === 0) return null;
-
-    const latest = records[records.length - 1];
-    return new File([latest.data], latest.name, { type: latest.type });
+    return records.map((r) => new File([r.data], r.name, { type: r.type }));
   } catch {
-    return null;
+    return [];
   }
 }
