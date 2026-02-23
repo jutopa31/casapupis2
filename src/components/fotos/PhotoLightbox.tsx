@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Share2, Download } from 'lucide-react';
 import type { FotoInvitado } from '@/types/database';
 
 // ---------------------------------------------------------------------------
@@ -30,6 +30,7 @@ export default function PhotoLightbox({
 }: PhotoLightboxProps) {
   const touchStartX = useRef<number | null>(null);
   const touchEndX = useRef<number | null>(null);
+  const [canNativeShare, setCanNativeShare] = useState(false);
 
   const currentPhoto = photos[currentIndex];
 
@@ -65,6 +66,51 @@ export default function PhotoLightbox({
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
   }, [isOpen, onClose, goNext, goPrev]);
+
+  // Detect native share support
+  useEffect(() => {
+    setCanNativeShare(typeof navigator !== 'undefined' && !!navigator.share);
+  }, []);
+
+  // -----------------------------------------------------------------------
+  // Share / download handler
+  // -----------------------------------------------------------------------
+
+  const handleShare = useCallback(async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!currentPhoto) return;
+
+    const photoUrl = currentPhoto.foto_url;
+    const shareText = currentPhoto.caption || 'Mirá esta foto ✨';
+
+    if (navigator.share) {
+      try {
+        const res = await fetch(photoUrl);
+        const blob = await res.blob();
+        const file = new File([blob], 'foto-casapupis.jpg', {
+          type: blob.type || 'image/jpeg',
+        });
+
+        if (navigator.canShare?.({ files: [file] })) {
+          await navigator.share({ files: [file], title: 'CasaPupis', text: shareText });
+        } else {
+          await navigator.share({ title: 'CasaPupis', text: shareText, url: photoUrl });
+        }
+      } catch (err) {
+        // AbortError means the user cancelled – not an actual error
+        if ((err as Error).name !== 'AbortError') {
+          console.error('Share failed:', err);
+        }
+      }
+      return;
+    }
+
+    // Desktop fallback: trigger download
+    const a = document.createElement('a');
+    a.href = photoUrl;
+    a.download = 'foto-casapupis.jpg';
+    a.click();
+  }, [currentPhoto]);
 
   // Lock body scroll when open
   useEffect(() => {
@@ -194,6 +240,15 @@ export default function PhotoLightbox({
               <p className="mt-1 text-xs text-white/40">
                 {currentIndex + 1} / {photos.length}
               </p>
+              <button
+                type="button"
+                onClick={handleShare}
+                className="mt-3 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm text-white transition-colors hover:bg-white/20 focus:outline-none"
+                aria-label={canNativeShare ? 'Compartir foto' : 'Descargar foto'}
+              >
+                {canNativeShare ? <Share2 size={16} /> : <Download size={16} />}
+                {canNativeShare ? 'Compartir' : 'Descargar'}
+              </button>
             </div>
           </motion.div>
         </motion.div>
