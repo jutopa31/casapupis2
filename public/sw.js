@@ -20,22 +20,25 @@ function openShareDB() {
   });
 }
 
-async function saveSharedFile(file) {
+async function saveSharedFiles(files) {
   const db = await openShareDB();
-  const arrayBuffer = await file.arrayBuffer();
+  // Convertir todos los archivos a ArrayBuffer en paralelo
+  const normalized = await Promise.all(
+    files.map(async (file) => ({
+      name: file.name || 'shared-photo.jpg',
+      type: file.type || 'image/jpeg',
+      data: await file.arrayBuffer(),
+      timestamp: Date.now(),
+    }))
+  );
   return new Promise((resolve, reject) => {
     const tx = db.transaction(IDB_STORE, 'readwrite');
     const store = tx.objectStore(IDB_STORE);
-    // Keep only the latest shared file
+    // Limpiar lote anterior y guardar todos los nuevos en la misma transacción
     store.clear();
-    const req = store.add({
-      name: file.name || 'shared-photo.jpg',
-      type: file.type || 'image/jpeg',
-      data: arrayBuffer,
-      timestamp: Date.now(),
-    });
-    req.onsuccess = () => resolve();
-    req.onerror = () => reject(req.error);
+    normalized.forEach((item) => store.add(item));
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
   });
 }
 
@@ -63,9 +66,9 @@ self.addEventListener('fetch', (event) => {
       (async () => {
         try {
           const formData = await event.request.formData();
-          const file = formData.get('photo');
-          if (file && file instanceof File) {
-            await saveSharedFile(file);
+          const files = formData.getAll('photo').filter((f) => f instanceof File);
+          if (files.length) {
+            await saveSharedFiles(files);
           }
         } catch (err) {
           console.error('[SW] Error procesando share:', err);
