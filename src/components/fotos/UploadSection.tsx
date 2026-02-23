@@ -61,6 +61,11 @@ export default function UploadSection({
   const [toast, setToast] = useState<Toast | null>(null);
   const [uploadedCount, setUploadedCount] = useState<number | null>(null);
 
+  // Ref sincronizado inline para que handleUpload siempre lea el estado actual,
+  // sin importar desde qué render o efecto se lo llame.
+  const selectedFilesRef = useRef<SelectedFile[]>([]);
+  selectedFilesRef.current = selectedFiles;
+
   // Ref usado para disparar auto-upload cuando llega un sharedFile
   const autoUploadRef = useRef(false);
 
@@ -173,23 +178,23 @@ export default function UploadSection({
 
   const handleUpload = async () => {
     const supabase = getSupabase();
-    if (selectedFiles.length === 0 || !guestName || !supabase) return;
+    // Leer desde el ref para garantizar el valor más reciente,
+    // independientemente del render en que se creó esta función.
+    const filesToUpload = selectedFilesRef.current;
+    if (filesToUpload.length === 0 || !guestName || !supabase) return;
 
     setIsUploading(true);
-    const progressList: UploadProgress[] = selectedFiles.map((f) => ({
+
+    const progressList: UploadProgress[] = filesToUpload.map((f) => ({
       fileName: f.file.name,
       progress: 0,
       status: 'compressing' as const,
     }));
     setUploadProgress([...progressList]);
 
-    let successCount = 0;
-    let errorCount = 0;
-
-    for (let i = 0; i < selectedFiles.length; i++) {
-      const { file } = selectedFiles[i];
-
-      try {
+    // Subir todos los archivos en paralelo
+    const results = await Promise.allSettled(
+      filesToUpload.map(async ({ file }, i) => {
         // --- Step 1: Compress ---
         progressList[i] = { ...progressList[i], status: 'compressing', progress: 10 };
         setUploadProgress([...progressList]);
@@ -201,13 +206,13 @@ export default function UploadSection({
           initialQuality: 0.85,
         });
 
-        progressList[i] = { ...progressList[i], progress: 40, status: 'uploading' };
+        progressList[i] = { ...progressList[i], status: 'uploading', progress: 40 };
         setUploadProgress([...progressList]);
 
         // --- Step 2: Upload to storage ---
         const timestamp = Date.now();
         const random = Math.random().toString(36).substring(2, 8);
-        const filePath = `${timestamp}_${random}.jpg`;
+        const filePath = `${timestamp}_${random}_${i}.jpg`;
 
         const { error: storageError } = await supabase.storage
           .from(bucketName)
@@ -226,12 +231,10 @@ export default function UploadSection({
           .from(bucketName)
           .getPublicUrl(filePath);
 
-        const publicUrl = publicUrlData.publicUrl;
-
         // --- Step 4: Insert DB row ---
         const { error: dbError } = await supabase.from(tableName).insert({
           nombre_invitado: guestName,
-          foto_url: publicUrl,
+          foto_url: publicUrlData.publicUrl,
           caption: caption.trim() || null,
         });
 
@@ -239,19 +242,27 @@ export default function UploadSection({
 
         progressList[i] = { ...progressList[i], progress: 100, status: 'done' };
         setUploadProgress([...progressList]);
-        successCount++;
-      } catch (err) {
+      })
+    );
+
+    // Marcar los errores individuales en el progreso
+    results.forEach((result, i) => {
+      if (result.status === 'rejected') {
+        const err = result.reason;
         const errorMsg = err instanceof Error ? err.message : 'Error desconocido';
         progressList[i] = { ...progressList[i], status: 'error', errorMsg };
-        setUploadProgress([...progressList]);
-        errorCount++;
-        console.error(`Error subiendo ${file.name}:`, err);
+        console.error(`Error subiendo ${filesToUpload[i].file.name}:`, err);
       }
+    });
+    if (results.some((r) => r.status === 'rejected')) {
+      setUploadProgress([...progressList]);
     }
 
     setIsUploading(false);
 
-    // Refresh count after upload
+    const successCount = results.filter((r) => r.status === 'fulfilled').length;
+    const errorCount = results.filter((r) => r.status === 'rejected').length;
+
     if (successCount > 0) {
       setUploadedCount((prev) => (prev ?? 0) + successCount);
     }
