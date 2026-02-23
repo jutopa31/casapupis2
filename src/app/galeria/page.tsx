@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
-import { Images } from 'lucide-react'
+import { Images, Download } from 'lucide-react'
 import { getSupabase } from '@/lib/supabase'
 
 interface GalleryPhoto {
@@ -14,6 +14,33 @@ export default function GaleriaPage() {
   const [photos, setPhotos] = useState<GalleryPhoto[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
+  const [canNativeShare, setCanNativeShare] = useState(false)
+
+  useEffect(() => {
+    setCanNativeShare(typeof navigator !== 'undefined' && !!navigator.share)
+  }, [])
+
+  const handleDownload = useCallback(async (url: string) => {
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        const res = await fetch(url)
+        const blob = await res.blob()
+        const file = new File([blob], 'foto-casapupis.jpg', {
+          type: blob.type || 'image/jpeg',
+        })
+        if (navigator.canShare?.({ files: [file] })) {
+          await navigator.share({ files: [file], title: 'CasaPupis' })
+          return
+        }
+      } catch {
+        // fall through to anchor download
+      }
+    }
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'foto-casapupis.jpg'
+    a.click()
+  }, [])
 
   const loadPhotos = useCallback(async () => {
     const supabase = getSupabase()
@@ -164,12 +191,25 @@ export default function GaleriaPage() {
             </button>
           )}
 
-          <img
-            src={photos[lightboxIndex].url}
-            alt={photos[lightboxIndex].name}
-            className="max-h-[85vh] max-w-full rounded-lg object-contain"
+          <div
+            className="flex flex-col items-center"
             onClick={(e) => e.stopPropagation()}
-          />
+          >
+            <img
+              src={photos[lightboxIndex].url}
+              alt={photos[lightboxIndex].name}
+              className="max-h-[80vh] max-w-full rounded-lg object-contain"
+            />
+            <button
+              type="button"
+              onClick={() => handleDownload(photos[lightboxIndex!].url)}
+              className="mt-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm text-white transition-colors hover:bg-white/20 focus:outline-none"
+              aria-label={canNativeShare ? 'Compartir foto' : 'Descargar foto'}
+            >
+              <Download size={16} />
+              {canNativeShare ? 'Compartir' : 'Descargar'}
+            </button>
+          </div>
         </motion.div>
       )}
     </div>

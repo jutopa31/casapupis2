@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trash2, Check } from 'lucide-react';
+import { Trash2, Check, Download } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import type { FotoInvitado } from '@/types/database';
 
@@ -111,6 +111,32 @@ export default function PhotoCard({
     }
   };
 
+  const handleDownload = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const url = foto.foto_url;
+
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        const res = await fetch(url);
+        const blob = await res.blob();
+        const file = new File([blob], 'foto-casapupis.jpg', {
+          type: blob.type || 'image/jpeg',
+        });
+        if (navigator.canShare?.({ files: [file] })) {
+          await navigator.share({ files: [file], title: 'CasaPupis' });
+          return;
+        }
+      } catch {
+        // fall through to anchor download
+      }
+    }
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'foto-casapupis.jpg';
+    a.click();
+  };
+
   return (
     <motion.div
       role="button"
@@ -157,16 +183,28 @@ export default function PhotoCard({
         </span>
       )}
 
-      {/* Delete button */}
-      {canDelete && !showConfirm && (
-        <button
-          type="button"
-          onClick={handleDeleteClick}
-          className="absolute top-2 right-2 z-10 rounded-full bg-black/50 p-1.5 text-white opacity-100 md:opacity-0 transition-opacity md:group-hover:opacity-100 focus:opacity-100 hover:bg-red-600"
-          aria-label="Eliminar foto"
-        >
-          <Trash2 size={14} />
-        </button>
+      {/* Action buttons (download + delete) */}
+      {!showConfirm && (
+        <div className="absolute top-2 right-2 z-10 flex flex-col gap-1.5">
+          <button
+            type="button"
+            onClick={handleDownload}
+            className="rounded-full bg-black/50 p-1.5 text-white opacity-100 md:opacity-0 transition-opacity md:group-hover:opacity-100 focus:opacity-100 hover:bg-[#C9A84C]"
+            aria-label="Descargar foto"
+          >
+            <Download size={14} />
+          </button>
+          {canDelete && (
+            <button
+              type="button"
+              onClick={handleDeleteClick}
+              className="rounded-full bg-black/50 p-1.5 text-white opacity-100 md:opacity-0 transition-opacity md:group-hover:opacity-100 focus:opacity-100 hover:bg-red-600"
+              aria-label="Eliminar foto"
+            >
+              <Trash2 size={14} />
+            </button>
+          )}
+        </div>
       )}
 
       {/* Delete confirmation overlay */}
