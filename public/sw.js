@@ -22,15 +22,17 @@ function openShareDB() {
 
 async function saveSharedFiles(files) {
   const db = await openShareDB();
-  // Convertir todos los archivos a ArrayBuffer en paralelo
-  const normalized = await Promise.all(
-    files.map(async (file) => ({
+  // Convertir a ArrayBuffer de forma secuencial para evitar cargar N fotos
+  // de alta resolución en memoria simultáneamente.
+  const normalized = [];
+  for (const file of files) {
+    normalized.push({
       name: file.name || 'shared-photo.jpg',
       type: file.type || 'image/jpeg',
       data: await file.arrayBuffer(),
       timestamp: Date.now(),
-    }))
-  );
+    });
+  }
   return new Promise((resolve, reject) => {
     const tx = db.transaction(IDB_STORE, 'readwrite');
     const store = tx.objectStore(IDB_STORE);

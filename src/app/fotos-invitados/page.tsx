@@ -226,6 +226,7 @@ export default function FotosInvitadosPage() {
             loadPhotos();
           }}
           sharedFiles={shareFiles}
+          noLimit={isAdmin}
         />
       </section>
 
