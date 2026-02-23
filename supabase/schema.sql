@@ -167,6 +167,34 @@ CREATE POLICY "Public delete access on fotos_civil"
 
 
 -- =============================================
+-- Table: fotos_luna_de_miel
+-- Photos from the honeymoon in Colonia de Sacramento, Uruguay.
+-- Mirrors the fotos_civil structure.
+-- =============================================
+CREATE TABLE IF NOT EXISTS fotos_luna_de_miel (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  nombre_invitado TEXT NOT NULL,
+  foto_url TEXT NOT NULL,
+  caption TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+ALTER TABLE fotos_luna_de_miel ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Public read access on fotos_luna_de_miel"
+  ON fotos_luna_de_miel FOR SELECT
+  USING (true);
+
+CREATE POLICY "Public insert access on fotos_luna_de_miel"
+  ON fotos_luna_de_miel FOR INSERT
+  WITH CHECK (true);
+
+CREATE POLICY "Public delete access on fotos_luna_de_miel"
+  ON fotos_luna_de_miel FOR DELETE
+  USING (true);
+
+
+-- =============================================
 -- Storage Buckets
 -- These must be created via the Supabase Dashboard
 -- (Storage > New Bucket) since SQL cannot create
@@ -197,3 +225,9 @@ CREATE POLICY "Public delete access on fotos_civil"
 -- Access: Public read and write (guests upload freely)
 --
 -- CREATE STORAGE BUCKET fotos-civil (public: true);
+
+-- Bucket: fotos-luna-de-miel
+-- Purpose: Honeymoon photos from Colonia de Sacramento, Uruguay
+-- Access: Public read and write (guests upload freely)
+--
+-- CREATE STORAGE BUCKET fotos-luna-de-miel (public: true);
