@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { motion } from 'framer-motion';
-import { ImageIcon, Camera } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ImageIcon, Camera, Share2, Download } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
 import type { FotoInvitado } from '@/types/database';
@@ -53,6 +53,16 @@ export default function FotosInvitadosPage() {
   // Lightbox state
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+
+  // Multi-selection state
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isSharing, setIsSharing] = useState(false);
+  const [canNativeShare, setCanNativeShare] = useState(false);
+
+  useEffect(() => {
+    setCanNativeShare(typeof navigator !== 'undefined' && !!navigator.share);
+  }, []);
 
   // -----------------------------------------------------------------------
   // Load photos (paginated)
@@ -140,10 +150,70 @@ export default function FotosInvitadosPage() {
   }, []);
 
   // -----------------------------------------------------------------------
+  // Selection helpers
+  // -----------------------------------------------------------------------
+
+  const toggleSelectionMode = useCallback(() => {
+    setSelectionMode((prev) => !prev);
+    setSelectedIds(new Set());
+  }, []);
+
+  const togglePhotoSelection = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const handleShareSelected = useCallback(async () => {
+    const selected = photos.filter((p) => selectedIds.has(p.id));
+    if (!selected.length) return;
+
+    setIsSharing(true);
+    try {
+      if (navigator.share) {
+        const files = await Promise.all(
+          selected.map(async (photo) => {
+            const res = await fetch(photo.foto_url);
+            const blob = await res.blob();
+            return new File([blob], 'foto-casapupis.jpg', {
+              type: blob.type || 'image/jpeg',
+            });
+          })
+        );
+
+        if (navigator.canShare?.({ files })) {
+          await navigator.share({ files, title: 'CasaPupis' });
+        } else {
+          await navigator.share({ title: 'CasaPupis', url: selected[0].foto_url });
+        }
+      } else {
+        // Desktop: trigger individual downloads with a small delay between each
+        for (const photo of selected) {
+          const a = document.createElement('a');
+          a.href = photo.foto_url;
+          a.download = 'foto-casapupis.jpg';
+          a.click();
+          await new Promise((r) => setTimeout(r, 350));
+        }
+      }
+    } catch (err) {
+      if ((err as Error).name !== 'AbortError') {
+        console.error('Share failed:', err);
+      }
+    } finally {
+      setIsSharing(false);
+    }
+  }, [photos, selectedIds]);
+
+  // -----------------------------------------------------------------------
   // Lightbox handlers
   // -----------------------------------------------------------------------
 
   const openLightbox = (index: number) => {
+    if (selectionMode) return;
     setLightboxIndex(index);
     setLightboxOpen(true);
   };
@@ -181,6 +251,17 @@ export default function FotosInvitadosPage() {
         >
           Comparti tus mejores momentos de la fiesta
         </motion.p>
+        <motion.button
+          type="button"
+          onClick={toggleSelectionMode}
+          className="mt-3 text-sm font-medium underline-offset-2 hover:underline"
+          style={{ color: '#C9A84C' }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.35, duration: 0.4 }}
+        >
+          {selectionMode ? 'Cancelar selección' : 'Seleccionar fotos'}
+        </motion.button>
       </header>
 
       {/* Upload section */}
@@ -248,12 +329,19 @@ export default function FotosInvitadosPage() {
                 <PhotoCard
                   key={foto.id}
                   foto={foto}
-                  onClick={() => openLightbox(index)}
+                  onClick={() =>
+                    selectionMode
+                      ? togglePhotoSelection(foto.id)
+                      : openLightbox(index)
+                  }
                   canDelete={
+                    !selectionMode &&
                     foto.bingo_challenge_id === null &&
                     (isAdmin || foto.nombre_invitado === guestName)
                   }
                   onDelete={handleDeletePhoto}
+                  selectionMode={selectionMode}
+                  isSelected={selectedIds.has(foto.id)}
                 />
               ))}
             </div>
@@ -285,6 +373,57 @@ export default function FotosInvitadosPage() {
           </>
         )}
       </section>
+
+      {/* Floating selection action bar */}
+      <AnimatePresence>
+        {selectionMode && (
+          <motion.div
+            initial={{ y: 96 }}
+            animate={{ y: 0 }}
+            exit={{ y: 96 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+            className="fixed bottom-20 left-0 right-0 z-50 flex justify-center px-4 md:bottom-6"
+          >
+            <div className="flex items-center gap-3 rounded-2xl bg-stone-900/90 px-4 py-3 shadow-2xl backdrop-blur-sm">
+              <span className="text-sm text-white/80">
+                {selectedIds.size > 0
+                  ? `${selectedIds.size} foto${selectedIds.size !== 1 ? 's' : ''}`
+                  : 'Seleccioná fotos'}
+              </span>
+
+              {selectedIds.size > 0 && (
+                <button
+                  type="button"
+                  onClick={handleShareSelected}
+                  disabled={isSharing}
+                  className="flex items-center gap-1.5 rounded-xl px-4 py-1.5 text-sm font-semibold text-white transition-opacity disabled:opacity-50"
+                  style={{ backgroundColor: '#C9A84C' }}
+                >
+                  {isSharing ? (
+                    <div
+                      className="h-4 w-4 animate-spin rounded-full border-2"
+                      style={{ borderColor: 'rgba(255,255,255,0.3)', borderTopColor: '#fff' }}
+                    />
+                  ) : canNativeShare ? (
+                    <Share2 size={14} />
+                  ) : (
+                    <Download size={14} />
+                  )}
+                  {canNativeShare ? 'Compartir' : 'Descargar'}
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={toggleSelectionMode}
+                className="rounded-xl bg-white/10 px-3 py-1.5 text-sm text-white transition-colors hover:bg-white/20"
+              >
+                Cancelar
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Lightbox */}
       <PhotoLightbox
