@@ -17,6 +17,7 @@ import {
   HeartHandshake,
   HelpCircle,
   Heart,
+  Plane,
 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import InstallAppButton from '@/components/InstallAppButton'
@@ -105,6 +106,12 @@ const quickAccessCards: QuickAccessCard[] = [
     description: '¿Cuánto sabés de los novios?',
     href: '/encuestas',
     icon: <HelpCircle className="h-6 w-6" />,
+  },
+  {
+    label: 'Luna de Miel',
+    description: 'Fotos de nuestra luna de miel en Colonia',
+    href: '/fotos-luna-de-miel',
+    icon: <Plane className="h-6 w-6" />,
   },
 ]
 
