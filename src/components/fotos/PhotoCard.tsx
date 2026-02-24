@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Check } from 'lucide-react';
 import { getSupabase } from '@/lib/supabase';
 import type { FotoInvitado } from '@/types/database';
 
@@ -17,6 +17,8 @@ interface PhotoCardProps {
   onDelete?: (fotoId: string) => void;
   tableName?: string;
   bucketName?: string;
+  selectionMode?: boolean;
+  isSelected?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -56,6 +58,8 @@ export default function PhotoCard({
   onDelete,
   tableName = 'fotos_invitados',
   bucketName = 'fotos-invitados',
+  selectionMode = false,
+  isSelected = false,
 }: PhotoCardProps) {
   const [showConfirm, setShowConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -128,8 +132,26 @@ export default function PhotoCard({
         className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
       />
 
-      {/* Bingo badge */}
-      {foto.bingo_challenge_id !== null && (
+      {/* Selection indicator */}
+      {selectionMode && (
+        <div
+          className={`absolute left-2 top-2 z-10 flex h-6 w-6 items-center justify-center rounded-full border-2 transition-colors ${
+            isSelected
+              ? 'border-[#C9A84C] bg-[#C9A84C]'
+              : 'border-white bg-black/30'
+          }`}
+        >
+          {isSelected && <Check size={13} className="text-white" strokeWidth={3} />}
+        </div>
+      )}
+
+      {/* Selected ring highlight */}
+      {selectionMode && isSelected && (
+        <div className="absolute inset-0 z-[5] rounded-xl ring-2 ring-inset ring-[#C9A84C]" />
+      )}
+
+      {/* Bingo badge (hidden while in selection mode to avoid overlap with the indicator) */}
+      {!selectionMode && foto.bingo_challenge_id !== null && (
         <span className="absolute left-2 top-2 z-10 rounded-full bg-[#C9A84C]/95 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-white shadow-sm">
           Bingo
         </span>

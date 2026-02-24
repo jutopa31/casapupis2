@@ -81,7 +81,7 @@ export default function PhotoLightbox({
     if (!currentPhoto) return;
 
     const photoUrl = currentPhoto.foto_url;
-    const shareText = currentPhoto.caption || 'Mirá esta foto ✨';
+    const optionalText = currentPhoto.caption ? { text: currentPhoto.caption } : {};
 
     if (navigator.share) {
       try {
@@ -92,9 +92,9 @@ export default function PhotoLightbox({
         });
 
         if (navigator.canShare?.({ files: [file] })) {
-          await navigator.share({ files: [file], title: 'CasaPupis', text: shareText });
+          await navigator.share({ files: [file], title: 'CasaPupis', ...optionalText });
         } else {
-          await navigator.share({ title: 'CasaPupis', text: shareText, url: photoUrl });
+          await navigator.share({ title: 'CasaPupis', ...optionalText, url: photoUrl });
         }
       } catch (err) {
         // AbortError means the user cancelled – not an actual error
