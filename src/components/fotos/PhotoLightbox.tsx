@@ -83,33 +83,40 @@ export default function PhotoLightbox({
     const photoUrl = currentPhoto.foto_url;
     const optionalText = currentPhoto.caption ? { text: currentPhoto.caption } : {};
 
-    if (navigator.share) {
-      try {
-        const res = await fetch(photoUrl);
-        const blob = await res.blob();
-        const file = new File([blob], 'foto-casapupis.jpg', {
-          type: blob.type || 'image/jpeg',
-        });
+    try {
+      const res = await fetch(photoUrl);
+      const blob = await res.blob();
+      const file = new File([blob], 'foto-casapupis.jpg', {
+        type: blob.type || 'image/jpeg',
+      });
 
-        if (navigator.canShare?.({ files: [file] })) {
-          await navigator.share({ files: [file], title: 'CasaPupis', ...optionalText });
-        } else {
-          await navigator.share({ title: 'CasaPupis', ...optionalText, url: photoUrl });
-        }
-      } catch (err) {
-        // AbortError means the user cancelled – not an actual error
-        if ((err as Error).name !== 'AbortError') {
-          console.error('Share failed:', err);
-        }
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], title: 'CasaPupis', ...optionalText });
+      } else {
+        await navigator.share({ title: 'CasaPupis', ...optionalText, url: photoUrl });
       }
-      return;
+    } catch (err) {
+      if ((err as Error).name !== 'AbortError') {
+        console.error('Share failed:', err);
+      }
     }
+  }, [currentPhoto]);
 
-    // Desktop fallback: trigger download
-    const a = document.createElement('a');
-    a.href = photoUrl;
-    a.download = 'foto-casapupis.jpg';
-    a.click();
+  const handleDownload = useCallback(async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!currentPhoto) return;
+    try {
+      const res = await fetch(currentPhoto.foto_url);
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = 'foto-casapupis.jpg';
+      a.click();
+      URL.revokeObjectURL(blobUrl);
+    } catch {
+      window.open(currentPhoto.foto_url, '_blank');
+    }
   }, [currentPhoto]);
 
   // Lock body scroll when open
@@ -240,15 +247,28 @@ export default function PhotoLightbox({
               <p className="mt-1 text-xs text-white/40">
                 {currentIndex + 1} / {photos.length}
               </p>
-              <button
-                type="button"
-                onClick={handleShare}
-                className="mt-3 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm text-white transition-colors hover:bg-white/20 focus:outline-none"
-                aria-label={canNativeShare ? 'Compartir foto' : 'Descargar foto'}
-              >
-                {canNativeShare ? <Share2 size={16} /> : <Download size={16} />}
-                {canNativeShare ? 'Compartir' : 'Descargar'}
-              </button>
+              <div className="mt-3 flex items-center gap-3">
+                {canNativeShare && (
+                  <button
+                    type="button"
+                    onClick={handleShare}
+                    className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm text-white transition-colors hover:bg-white/20 focus:outline-none"
+                    aria-label="Compartir foto"
+                  >
+                    <Share2 size={16} />
+                    Compartir
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={handleDownload}
+                  className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm text-white transition-colors hover:bg-white/20 focus:outline-none"
+                  aria-label="Descargar foto"
+                >
+                  <Download size={16} />
+                  Descargar
+                </button>
+              </div>
             </div>
           </motion.div>
         </motion.div>

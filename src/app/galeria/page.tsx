@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
-import { Images, Download } from 'lucide-react'
+import { Images, Download, Share2 } from 'lucide-react'
 import { getSupabase } from '@/lib/supabase'
 
 interface GalleryPhoto {
@@ -20,26 +20,38 @@ export default function GaleriaPage() {
     setCanNativeShare(typeof navigator !== 'undefined' && !!navigator.share)
   }, [])
 
-  const handleDownload = useCallback(async (url: string) => {
-    if (typeof navigator !== 'undefined' && navigator.share) {
-      try {
-        const res = await fetch(url)
-        const blob = await res.blob()
-        const file = new File([blob], 'foto-casapupis.jpg', {
-          type: blob.type || 'image/jpeg',
-        })
-        if (navigator.canShare?.({ files: [file] })) {
-          await navigator.share({ files: [file], title: 'CasaPupis' })
-          return
-        }
-      } catch {
-        // fall through to anchor download
+  const handleShare = useCallback(async (url: string) => {
+    try {
+      const res = await fetch(url)
+      const blob = await res.blob()
+      const file = new File([blob], 'foto-casapupis.jpg', {
+        type: blob.type || 'image/jpeg',
+      })
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], title: 'CasaPupis' })
+      } else {
+        await navigator.share({ title: 'CasaPupis', url })
+      }
+    } catch (err) {
+      if ((err as Error).name !== 'AbortError') {
+        console.error('Share failed:', err)
       }
     }
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'foto-casapupis.jpg'
-    a.click()
+  }, [])
+
+  const handleDownload = useCallback(async (url: string) => {
+    try {
+      const res = await fetch(url)
+      const blob = await res.blob()
+      const blobUrl = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = blobUrl
+      a.download = 'foto-casapupis.jpg'
+      a.click()
+      URL.revokeObjectURL(blobUrl)
+    } catch {
+      window.open(url, '_blank')
+    }
   }, [])
 
   const loadPhotos = useCallback(async () => {
@@ -200,15 +212,28 @@ export default function GaleriaPage() {
               alt={photos[lightboxIndex].name}
               className="max-h-[80vh] max-w-full rounded-lg object-contain"
             />
-            <button
-              type="button"
-              onClick={() => handleDownload(photos[lightboxIndex!].url)}
-              className="mt-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm text-white transition-colors hover:bg-white/20 focus:outline-none"
-              aria-label={canNativeShare ? 'Compartir foto' : 'Descargar foto'}
-            >
-              <Download size={16} />
-              {canNativeShare ? 'Compartir' : 'Descargar'}
-            </button>
+            <div className="mt-4 flex items-center gap-3">
+              {canNativeShare && (
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); handleShare(photos[lightboxIndex!].url) }}
+                  className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm text-white transition-colors hover:bg-white/20 focus:outline-none"
+                  aria-label="Compartir foto"
+                >
+                  <Share2 size={16} />
+                  Compartir
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); handleDownload(photos[lightboxIndex!].url) }}
+                className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm text-white transition-colors hover:bg-white/20 focus:outline-none"
+                aria-label="Descargar foto"
+              >
+                <Download size={16} />
+                Descargar
+              </button>
+            </div>
           </div>
         </motion.div>
       )}
