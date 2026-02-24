@@ -18,6 +18,8 @@ interface UploadSectionProps {
   photoLimit?: number;
   /** Archivos recibidos desde el Share Target de Android. Si se proveen, se suben automáticamente. */
   sharedFiles?: File[];
+  /** Cuando es true, no se aplica el límite de fotos por invitado (para admins). */
+  noLimit?: boolean;
 }
 
 interface SelectedFile {
@@ -38,6 +40,39 @@ interface Toast {
 }
 
 // ---------------------------------------------------------------------------
+// Concurrency-limited Promise.allSettled
+// Processes up to `concurrency` tasks simultaneously; as each finishes the
+// next one starts immediately, preserving original result order.
+// ---------------------------------------------------------------------------
+
+async function runWithConcurrency<T>(
+  tasks: Array<() => Promise<T>>,
+  concurrency: number
+): Promise<PromiseSettledResult<T>[]> {
+  const results: PromiseSettledResult<T>[] = new Array(tasks.length);
+  let nextIdx = 0;
+
+  const worker = async () => {
+    while (nextIdx < tasks.length) {
+      const i = nextIdx++;
+      try {
+        results[i] = { status: 'fulfilled', value: await tasks[i]() };
+      } catch (reason) {
+        results[i] = { status: 'rejected', reason };
+      }
+    }
+  };
+
+  await Promise.all(
+    Array.from({ length: Math.min(concurrency, tasks.length) }, worker)
+  );
+  return results;
+}
+
+// Máximo de uploads simultáneos — evita saturar la red y el motor de compresión
+const UPLOAD_CONCURRENCY = 5;
+
+// ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
@@ -49,6 +84,7 @@ export default function UploadSection({
   bucketName = 'fotos-invitados',
   photoLimit = PHOTO_LIMIT_PER_GUEST,
   sharedFiles,
+  noLimit = false,
 }: UploadSectionProps) {
   const { guestName } = useAuth();
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -85,8 +121,9 @@ export default function UploadSection({
   }, [guestName]);
 
   useEffect(() => {
+    if (noLimit) return; // admins no necesitan contar
     loadUploadedCount();
-  }, [loadUploadedCount]);
+  }, [loadUploadedCount, noLimit]);
 
   // -----------------------------------------------------------------------
   // Share Target: auto-populate + auto-upload when sharedFile is provided
@@ -111,7 +148,9 @@ export default function UploadSection({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedFiles.length]);
 
-  const remaining = uploadedCount !== null ? photoLimit - uploadedCount : photoLimit;
+  // Para admins (noLimit) el remaining es ilimitado; Infinity hace que los checks
+  // `availableSlots <= 0` y `slice(0, Infinity)` funcionen correctamente sin cambios.
+  const remaining = noLimit ? Infinity : (uploadedCount !== null ? photoLimit - uploadedCount : photoLimit);
 
   // -----------------------------------------------------------------------
   // Toast helper
@@ -195,9 +234,10 @@ export default function UploadSection({
     }));
     setUploadProgress([...progressList]);
 
-    // Subir todos los archivos en paralelo
-    const results = await Promise.allSettled(
-      filesToUpload.map(async ({ file }, i) => {
+    // Subir archivos con concurrencia limitada (máx. UPLOAD_CONCURRENCY a la vez)
+    // para evitar saturar la red, los web workers de compresión y los límites de Supabase.
+    const results = await runWithConcurrency(
+      filesToUpload.map(({ file }, i) => async () => {
         // --- Step 1: Compress ---
         progressList[i] = { ...progressList[i], status: 'compressing', progress: 10 };
         setUploadProgress([...progressList]);
@@ -245,7 +285,8 @@ export default function UploadSection({
 
         progressList[i] = { ...progressList[i], progress: 100, status: 'done' };
         setUploadProgress([...progressList]);
-      })
+      }),
+      UPLOAD_CONCURRENCY
     );
 
     // Marcar los errores individuales en el progreso
@@ -311,8 +352,8 @@ export default function UploadSection({
         )}
       </AnimatePresence>
 
-      {/* Photo limit indicator */}
-      {uploadedCount !== null && (
+      {/* Photo limit indicator (oculto para admins) */}
+      {!noLimit && uploadedCount !== null && (
         <div className="mb-3 text-center">
           <span className={`text-xs font-medium ${remaining <= 5 ? 'text-amber-600' : 'text-stone-400'}`}>
             {remaining > 0
@@ -375,8 +416,8 @@ export default function UploadSection({
             className="mt-6 overflow-hidden"
           >
             <div className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
-              {/* Preview grid */}
-              <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5">
+              {/* Preview grid — scrollable cuando hay muchas fotos */}
+              <div className={`grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5${selectedFiles.length > 12 ? ' max-h-80 overflow-y-auto rounded-lg pr-1' : ''}`}>
                 {selectedFiles.map((sf, idx) => (
                   <div key={idx} className="group relative aspect-square overflow-hidden rounded-lg bg-stone-100">
                     <img
