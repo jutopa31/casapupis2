@@ -113,28 +113,18 @@ export default function PhotoCard({
 
   const handleDownload = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    const url = foto.foto_url;
-
-    if (typeof navigator !== 'undefined' && navigator.share) {
-      try {
-        const res = await fetch(url);
-        const blob = await res.blob();
-        const file = new File([blob], 'foto-casapupis.jpg', {
-          type: blob.type || 'image/jpeg',
-        });
-        if (navigator.canShare?.({ files: [file] })) {
-          await navigator.share({ files: [file], title: 'CasaPupis' });
-          return;
-        }
-      } catch {
-        // fall through to anchor download
-      }
+    try {
+      const res = await fetch(foto.foto_url);
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = 'foto-casapupis.jpg';
+      a.click();
+      URL.revokeObjectURL(blobUrl);
+    } catch {
+      window.open(foto.foto_url, '_blank');
     }
-
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'foto-casapupis.jpg';
-    a.click();
   };
 
   return (
@@ -189,7 +179,7 @@ export default function PhotoCard({
           <button
             type="button"
             onClick={handleDownload}
-            className="rounded-full bg-black/50 p-1.5 text-white opacity-100 md:opacity-0 transition-opacity md:group-hover:opacity-100 focus:opacity-100 hover:bg-[#C9A84C]"
+            className="rounded-full bg-black/50 p-1.5 text-white transition-colors focus:outline-none hover:bg-[#C9A84C]"
             aria-label="Descargar foto"
           >
             <Download size={14} />
@@ -198,7 +188,7 @@ export default function PhotoCard({
             <button
               type="button"
               onClick={handleDeleteClick}
-              className="rounded-full bg-black/50 p-1.5 text-white opacity-100 md:opacity-0 transition-opacity md:group-hover:opacity-100 focus:opacity-100 hover:bg-red-600"
+              className="rounded-full bg-black/50 p-1.5 text-white transition-colors focus:outline-none hover:bg-red-600"
               aria-label="Eliminar foto"
             >
               <Trash2 size={14} />
