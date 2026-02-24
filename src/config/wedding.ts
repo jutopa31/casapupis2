@@ -249,5 +249,6 @@ export const weddingConfig: WeddingConfig = {
     { label: "Programa", href: "/programa", icon: "Clock" },
     { label: "Agradecimiento", href: "/agradecimiento", icon: "HeartHandshake" },
     { label: "Trivia", href: "/encuestas", icon: "HelpCircle" },
+    { label: "Luna de Miel", href: "/fotos-luna-de-miel", icon: "Plane" },
   ],
 };
