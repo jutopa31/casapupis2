@@ -18,6 +18,8 @@ interface UploadSectionProps {
   photoLimit?: number;
   /** Archivos recibidos desde el Share Target de Android. Si se proveen, se suben automáticamente. */
   sharedFiles?: File[];
+  /** Set to false for tables that don't have a bingo_challenge_id column (e.g. fotos_luna_de_miel) */
+  filterBingoChallenges?: boolean;
 }
 
 interface SelectedFile {
@@ -49,6 +51,7 @@ export default function UploadSection({
   bucketName = 'fotos-invitados',
   photoLimit = PHOTO_LIMIT_PER_GUEST,
   sharedFiles,
+  filterBingoChallenges = true,
 }: UploadSectionProps) {
   const { guestName } = useAuth();
   const cameraInputRef = useRef<HTMLInputElement>(null);
@@ -76,13 +79,16 @@ export default function UploadSection({
   const loadUploadedCount = useCallback(async () => {
     const supabase = getSupabase();
     if (!supabase || !guestName) return;
-    const { count } = await supabase
+    let query = supabase
       .from(tableName)
       .select('*', { count: 'exact', head: true })
-      .eq('nombre_invitado', guestName)
-      .is('bingo_challenge_id', null);
+      .eq('nombre_invitado', guestName);
+    if (filterBingoChallenges) {
+      query = query.is('bingo_challenge_id', null);
+    }
+    const { count } = await query;
     setUploadedCount(count ?? 0);
-  }, [guestName]);
+  }, [guestName, filterBingoChallenges]);
 
   useEffect(() => {
     loadUploadedCount();

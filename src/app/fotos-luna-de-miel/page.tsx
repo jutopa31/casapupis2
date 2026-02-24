@@ -203,6 +203,7 @@ export default function FotosLunaDeMielPage() {
           tableName={TABLE}
           bucketName={BUCKET}
           photoLimit={100}
+          filterBingoChallenges={false}
         />
       </section>
 
