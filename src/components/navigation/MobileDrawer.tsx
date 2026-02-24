@@ -17,6 +17,7 @@ import {
   HeartHandshake,
   HelpCircle,
   Heart,
+  Plane,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import InstallAppButton from '@/components/InstallAppButton';
@@ -55,6 +56,7 @@ const drawerLinks: DrawerLink[] = [
   // { label: 'Programa', href: '/programa', icon: Clock },
   { label: 'Agradecimiento', href: '/agradecimiento', icon: HeartHandshake },
   { label: 'Trivia', href: '/encuestas', icon: HelpCircle },
+  { label: 'Luna de Miel', href: '/fotos-luna-de-miel', icon: Plane },
 ];
 
 // ---------------------------------------------------------------------------
